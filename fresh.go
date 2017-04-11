@@ -9,20 +9,29 @@ import (
 
 type (
 	Fresh interface {
-		New(string, string)
 		Run()
+		GET(string, func())
+
 	}
 	fresh struct {
 		host string
 		port string
-		server *http.Server
-		handler *Handler
-		router *Router
+		service *service // must be an array
 	}
 )
 
-func New(h string, p string) *fresh{
-	return &fresh{host: h, port: p, server:new(http.Server), handler: new(Handler)}
+func New(h string, p string) Fresh{
+	return &fresh{
+		host: h,
+		port: p,
+		service: &service{
+			server: new(http.Server),
+			handler: new(Handler),
+			router: new(Router)}}
+
+
+
+	// config server array by reading JSON files fresh.json
 }
 
 func (f *fresh) Run(){
@@ -31,10 +40,15 @@ func (f *fresh) Run(){
 		os.Exit(1)
 	}
 	fmt.Println("Server started on " + f.host + ":" + f.port)
-	f.server.Handler = f.handler
-	f.server.Serve(listener)
+	f.service.server.Handler = f.service.handler
+	f.service.server.Serve(listener)
 }
 
+
+func (f *fresh) GET(p string, h func()){
+	// instantiate new route
+	// append new route to router
+}
 
 
 
