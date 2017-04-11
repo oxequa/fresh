@@ -1,11 +1,11 @@
 package fresh
 
-import(
+import (
 	"net/http"
 )
 
 type service struct {
-	server *http.Server
+	server  *http.Server
 	handler *Handler
-	router *Router
+	router  *Router
 }

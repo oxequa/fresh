@@ -5,10 +5,9 @@ import (
 )
 
 type Route struct {
-	name string
-	path string
+	name    string
+	path    string
 	handler http.Handler
-
 }
 
 type Router struct {

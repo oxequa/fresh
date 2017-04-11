@@ -1,12 +1,11 @@
 package fresh
 
 import (
-	"net/http"
 	"io"
+	"net/http"
 )
 
 type Handler struct {
-
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
