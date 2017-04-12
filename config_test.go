@@ -47,4 +47,5 @@ func TestWrite(t *testing.T) {
 	if err = config.write(path); err != nil {
 		t.Error(err)
 	}
+	os.Remove(path)
 }
