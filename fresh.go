@@ -33,8 +33,8 @@ func New(h string, p string) Fresh {
 }
 
 func (f *fresh) Run() {
-	listener, error := net.Listen("tcp", f.host+":"+f.port)
-	if error != nil {
+	listener, err := net.Listen("tcp", f.host+":"+f.port)
+	if err != nil {
 		os.Exit(1)
 	}
 	fmt.Println("Server started on " + f.host + ":" + f.port)
