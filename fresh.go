@@ -10,7 +10,7 @@ import (
 type (
 	Fresh interface {
 		Run()
-		GET(string, func())
+		Get(string, func())
 	}
 	fresh struct {
 		host    string
@@ -42,7 +42,7 @@ func (f *fresh) Run() {
 	f.service.server.Serve(listener)
 }
 
-func (f *fresh) GET(p string, h func()) {
+func (f *fresh) Get(p string, h func()) {
 	// instantiate new route
 	// append new route to router
 }
