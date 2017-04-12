@@ -8,7 +8,7 @@ func TestRun(t *testing.T) {
 	host := "localhost"
 	port := "8080"
 	f := New(host, port)
-	go func(){
+	go func() {
 		f.Run()
 	}()
 }
