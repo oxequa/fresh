@@ -14,8 +14,8 @@ const (
 )
 
 type config struct {
+	port  int    `json:"port,omitempty"`
 	host  string `json:"host,omitempty"`
-	port  string `json:"port,omitempty"`
 	ssl   bool   `json:"ssl,omitempty"`
 	limit limit  `json:"limit,omitempty"` // body limit
 	gzip  gzip   `json:"gzip,omitempty"`  // gzip config
@@ -43,7 +43,7 @@ type gzip struct {
 }
 
 func (c *config) read(path string) error {
-	content, err := ioutil.ReadFile(filepath.Join(path,file))
+	content, err := ioutil.ReadFile(filepath.Join(path, file))
 	if err != nil {
 		return err
 	}
