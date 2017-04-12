@@ -39,7 +39,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	config := &config{}
+	config := config{}
 	path, err := temp()
 	if err != nil {
 		t.Error(err)
