@@ -10,7 +10,7 @@ import (
 type (
 	Fresh interface {
 		Run()
-		GET(string, func())
+		Get(string, func())
 	}
 	fresh struct {
 		host    string
@@ -33,8 +33,8 @@ func New(h string, p string) Fresh {
 }
 
 func (f *fresh) Run() {
-	listener, error := net.Listen("tcp", f.host+":"+f.port)
-	if error != nil {
+	listener, err := net.Listen("tcp", f.host+":"+f.port)
+	if err != nil {
 		os.Exit(1)
 	}
 	fmt.Println("Server started on " + f.host + ":" + f.port)
@@ -42,7 +42,7 @@ func (f *fresh) Run() {
 	f.service.server.Serve(listener)
 }
 
-func (f *fresh) GET(p string, h func()) {
+func (f *fresh) Get(p string, h func()) {
 	// instantiate new route
 	// append new route to router
 }
