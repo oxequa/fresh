@@ -47,6 +47,7 @@ func (f *fresh) Run(){
 
 func (f *fresh) GET(p string, h func()){
 	// instantiate new route
+
 	// append new route to router
 }
 
