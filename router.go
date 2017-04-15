@@ -5,22 +5,27 @@ import (
 )
 
 type Route struct {
-	method string
-	name string
-	path string
-	handler http.Handler
-	before func()
-	after func()
+
+	method 	string
+	name 	string
+	path 	string
+	handler func(Request, Response)
+	before	func()
+	after 	func()
 }
 
 type Router struct {
 	routes []*Route
 }
 
-func (r *Router) add(m string, p string, h func(), b func(), a func()) {
-
-}
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-
+	for _, route := range r.routes{
+		if req.RequestURI == route.path {
+			route.handler(NewRequest(req), NewResponse(w))
+		}
+	}
+	// find the right route that match current request
+	// ger route and payload parameters
+	// call route handler
 }
