@@ -43,7 +43,7 @@ func New(h string, p string) Fresh {
 
 
 // Load all servers configurations and start them
-func (f *fresh) Run() {
+func (f *fresh) Run() error{
 	shutdown := make(chan os.Signal)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	listener, err := net.Listen("tcp", f.host+":"+f.port)
@@ -65,11 +65,12 @@ func (f *fresh) Run() {
 
 
 // Register for GET APIs
-func (f *fresh) Get(p string, h func(Request, Response)) {
+func (f *fresh) Get(p string, h func(Request, Response)) error{
 	r := &Route{
 		method:	"GET",
 		path: p,
 		handler: h}
 	f.service.router.routes = append(f.service.router.routes, r)
+	return nil
 }
 
