@@ -4,8 +4,9 @@ import (
 	"net/http"
 )
 
-type Route struct {
 
+// Route structure
+type Route struct {
 	method 	string
 	name 	string
 	path 	string
@@ -14,11 +15,14 @@ type Route struct {
 	after 	func()
 }
 
+
+// Router structure
 type Router struct {
 	routes []*Route
 }
 
 
+// Router main function. Find the matching route and call registered handlers.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	for _, route := range r.routes{
 		if req.RequestURI == route.path {
