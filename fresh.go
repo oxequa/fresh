@@ -17,7 +17,6 @@ type (
 	Fresh interface {
 		Run() error
 		Get(string, func(Request, Response)) error
-
 	}
 	fresh struct {
 		host    string
@@ -46,7 +45,7 @@ func New(h string, p string) Fresh {
 func (f *fresh) Run() error{
 	shutdown := make(chan os.Signal)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	listener, err := net.Listen("tcp", f.host+":"+f.port)
+	listener, err := net.Listen("tcp", f.host + ":" + f.port)
 	if err != nil {
 		return err
 	}
@@ -73,4 +72,3 @@ func (f *fresh) Get(p string, h func(Request, Response)) error{
 	f.service.router.routes = append(f.service.router.routes, r)
 	return nil
 }
-
