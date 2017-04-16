@@ -17,6 +17,10 @@ type (
 	Fresh interface {
 		Run() error
 		Get(string, func(Request, Response)) error
+		Post(string, func(Request, Response)) error
+		Put(string, func(Request, Response)) error
+		Patch(string, func(Request, Response)) error
+		Delete(string, func(Request, Response)) error
 	}
 	fresh struct {
 		host    string
@@ -65,8 +69,32 @@ func (f *fresh) Run() error{
 
 // Register for GET APIs
 func (f *fresh) Get(p string, h func(Request, Response)) error{
+	return f.register("GET", p, h)
+}
+
+// Register for POST APIs
+func (f *fresh) Post(p string, h func(Request, Response)) error{
+	return f.register("POST", p, h)
+}
+
+// Register for PUT APIs
+func (f *fresh) Put(p string, h func(Request, Response)) error{
+	return f.register("PUT", p, h)
+}
+
+// Register for PATCH APIs
+func (f *fresh) Patch(p string, h func(Request, Response)) error{
+	return f.register("PATCH", p, h)
+}
+
+// Register for DELETE APIs
+func (f *fresh) Delete(p string, h func(Request, Response)) error{
+	return f.register("DELETE", p, h)
+}
+
+func (f *fresh) register(m string, p string, h func(Request, Response)) error{
 	r := &Route{
-		method:	"GET",
+		method:	m,
 		path: p,
 		handler: h}
 	f.service.router.routes = append(f.service.router.routes, r)

@@ -25,10 +25,12 @@ type Router struct {
 // Router main function. Find the matching route and call registered handlers.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	for _, route := range r.routes{
-		if req.RequestURI == route.path {
+		if req.Method == route.method && req.RequestURI == route.path {
 			route.handler(NewRequest(req), NewResponse(w))
 		}
 	}
+
+	w.WriteHeader(http.StatusNotFound)
 	// find the right route that match current request
 	// ger route and payload parameters
 	// call route handler
