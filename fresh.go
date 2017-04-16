@@ -1,16 +1,20 @@
 package fresh
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"context"
+	"time"
 )
 
 type (
 	Fresh interface {
-		Run()
-		Get(string, func())
+		Run() error
+		Get(string, func()) error
 	}
 	fresh struct {
 		host    string
@@ -32,17 +36,26 @@ func New(h string, p string) Fresh {
 	// config server array by reading JSON files fresh.json
 }
 
-func (f *fresh) Run() {
+func (f *fresh) Run() error {
+	shutdown := make(chan os.Signal)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	listener, err := net.Listen("tcp", f.host+":"+f.port)
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
-	fmt.Println("Server started on " + f.host + ":" + f.port)
-	f.service.server.Handler = f.service.handler
-	f.service.server.Serve(listener)
+	go func() {
+		log.Println("Server started on " + f.host + ":" + f.port)
+		f.service.server.Handler = f.service.handler
+		f.service.server.Serve(listener)
+	}()
+	<-shutdown
+	log.Println("Server shutting down...")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	f.service.server.Shutdown(ctx)
+	return nil
 }
 
-func (f *fresh) Get(p string, h func()) {
+func (f *fresh) Get(p string, h func()) error{
 	// instantiate new route
 
 	// append new route to router
