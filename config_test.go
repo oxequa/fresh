@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+const dir = "fresh"
+
 func temp() (d string, err error) {
 	d, err = ioutil.TempDir(os.TempDir(), dir)
 	return
@@ -29,7 +31,7 @@ func TestRead(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err = result.read(path); err != nil {
+	if err = result.read(); err != nil {
 		t.Error(err)
 	}
 	if result != expected {
