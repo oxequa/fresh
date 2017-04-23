@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"context"
 	"time"
-	"io/ioutil"
 )
 
 // Main Fresh structure
