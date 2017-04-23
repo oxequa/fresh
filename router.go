@@ -2,6 +2,7 @@ package fresh
 
 import (
 	"net/http"
+	"strings"
 )
 
 
@@ -21,12 +22,22 @@ type Router struct {
 	routes []*Route
 }
 
+func (r *Router) Register(m string, p string, h func(Request, Response)) error{
+	route := &Route{
+		method:	m,
+		path: p,
+		handler: h}
+	r.routes = append(r.routes, route)
+	return nil
+}
+
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	for _, route := range r.routes{
-		if req.Method == route.method && req.RequestURI == route.path {
+		if req.Method == route.method && strings.TrimRight(req.RequestURI, "/") == strings.TrimRight(route.path, "/") {
 			route.handler(NewRequest(req), NewResponse(w))
+			return
 		}
 	}
 
