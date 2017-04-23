@@ -11,8 +11,8 @@ import (
 // Request structure
 type (
 	Request interface {
-		//QueryString() string
-		//QueryParam(string) string
+		QueryString() string
+		QueryParam(string) string
 		//Param(string) string
 		Body() io.ReadCloser
 		Map(interface{})
@@ -30,13 +30,22 @@ func NewRequest(r *http.Request) Request{
 	return &request{r: r}
 }
 
+// Get the query string
+func(req * request) QueryString() string{
+	return req.r.URL.RawQuery
+}
 
-// Return the body from a application/json request
+// Get a query string parameter
+func(req * request) QueryParam(k string) string{
+	return req.r.URL.Query().Get(k)
+}
+
+// Get the body from a application/json request
 func(req * request) Body() io.ReadCloser{
 	return req.r.Body
 }
 
-// Return the body mapped to an interface from a application/json request
+// Get the body mapped to an interface from a application/json request
 func(req * request) Map(i interface{}){
 	err := json.NewDecoder(req.r.Body).Decode(i)
 	if err != nil{
@@ -45,12 +54,12 @@ func(req * request) Map(i interface{}){
 	// TODO: handle errors
 }
 
-// Return the form from a application/x-www-form-urlencoded request
+// Get the form from a application/x-www-form-urlencoded request
 func(req * request) Form() url.Values{
 	return req.r.Form
 }
 
-// Return the form value by a given key from a application/x-www-form-urlencoded request
+// Get the form value by a given key from a application/x-www-form-urlencoded request
 func(req * request) FormValue(k string) string{
 	return req.r.FormValue(k)
 }

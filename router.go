@@ -34,8 +34,10 @@ func (r *Router) Register(m string, p string, h func(Request, Response)) error{
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	pathToMatch := strings.TrimRight(req.RequestURI, "/")
+	pathToMatch = pathToMatch[:strings.LastIndex(pathToMatch, "?")]
 	for _, route := range r.routes{
-		if req.Method == route.method && strings.TrimRight(req.RequestURI, "/") == strings.TrimRight(route.path, "/") {
+		if req.Method == route.method && strings.TrimRight(route.path, "/") == pathToMatch {
 			route.handler(NewRequest(req), NewResponse(w))
 			return
 		}
