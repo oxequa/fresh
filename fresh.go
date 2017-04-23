@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"context"
 	"time"
+	"io/ioutil"
 )
-
 
 // Main Fresh structure
 type (
@@ -23,24 +23,21 @@ type (
 		Delete(string, func(Request, Response)) error
 	}
 	fresh struct {
-		host    string
-		port    string
-		service *service // must be an array
+		config  *config
+		router  *Router
+		server  *http.Server
 	}
 )
 
 
 // Initialize main Fresh structure
-func New(h string, p string) Fresh {
-	return &fresh{
-		host: h,
-		port: p,
-		service: &service{
-			server:  new(http.Server),
-			router:  new(Router),
-		},
+func New() Fresh {
+	fresh := fresh{}
+	if fresh.config.read() != nil{
+		// return with default params
+		return &fresh
 	}
-	// config server array by reading JSON files fresh.json
+	return &fresh
 }
 
 
@@ -49,19 +46,19 @@ func New(h string, p string) Fresh {
 func (f *fresh) Run() error{
 	shutdown := make(chan os.Signal)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	listener, err := net.Listen("tcp", f.host + ":" + f.port)
+	listener, err := net.Listen("tcp", f.config.host + ":" + f.config.port)
 	if err != nil {
 		return err
 	}
 	go func() {
-		log.Println("Server started on " + f.host + ":" + f.port)
-		f.service.server.Handler = f.service.router
-		f.service.server.Serve(listener)
+		log.Println("Server started on " + f.config.host + ":" + f.config.port)
+		f.server.Handler = f.router
+		f.server.Serve(listener)
 	}()
 	<-shutdown
 	log.Println("Server shutting down...")
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	f.service.server.Shutdown(ctx)
+	f.server.Shutdown(ctx)
 	return nil
 }
 
@@ -69,25 +66,25 @@ func (f *fresh) Run() error{
 
 // Register for GET APIs
 func (f *fresh) Get(p string, h func(Request, Response)) error{
-	return f.service.router.Register("GET", p, h)
+	return f.router.Register("GET", p, h)
 }
 
 // Register for POST APIs
 func (f *fresh) Post(p string, h func(Request, Response)) error{
-	return f.service.router.Register("POST", p, h)
+	return f.router.Register("POST", p, h)
 }
 
 // Register for PUT APIs
 func (f *fresh) Put(p string, h func(Request, Response)) error{
-	return f.service.router.Register("PUT", p, h)
+	return f.router.Register("PUT", p, h)
 }
 
 // Register for PATCH APIs
 func (f *fresh) Patch(p string, h func(Request, Response)) error{
-	return f.service.router.Register("PATCH", p, h)
+	return f.router.Register("PATCH", p, h)
 }
 
 // Register for DELETE APIs
 func (f *fresh) Delete(p string, h func(Request, Response)) error{
-	return f.service.router.Register("DELETE", p, h)
+	return f.router.Register("DELETE", p, h)
 }

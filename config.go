@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	dir  = ".fresh"
-	file = "config.json"
+	file = "fresh.json"
 	perm = 0770
 )
 
@@ -42,8 +41,8 @@ type gzip struct {
 	level  int  `json:"level,omitempty"`
 }
 
-func (c *config) read(path string) error {
-	content, err := ioutil.ReadFile(filepath.Join(path, file))
+func (c *config) read() error {
+	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
