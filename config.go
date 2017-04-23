@@ -13,7 +13,7 @@ const (
 )
 
 type config struct {
-	port  int    `json:"port,omitempty"`
+	port  string `json:"port,omitempty"`
 	host  string `json:"host,omitempty"`
 	ssl   bool   `json:"ssl,omitempty"`
 	limit limit  `json:"limit,omitempty"` // body limit
