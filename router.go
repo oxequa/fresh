@@ -2,29 +2,27 @@ package fresh
 
 import (
 	"net/http"
-	"strings"
 	"regexp"
+	"strings"
 )
-
 
 // Route structure
 type Route struct {
-	method 	string
-	name 	string
-	path 	string
+	method  string
+	name    string
+	path    string
 	handler func(Request, Response)
-	before	func()
-	after 	func()
-	params	[]string
+	before  func()
+	after   func()
+	params  []string
 }
-
 
 // Router structure
 type Router struct {
 	routes []*Route
 }
 
-func (r *Router) Register(m string, p string, h func(Request, Response)) error{
+func (r *Router) Register(m string, p string, h func(Request, Response)) error {
 	params := []string{}
 	for {
 		s := strings.Index(p, "{")
@@ -40,26 +38,25 @@ func (r *Router) Register(m string, p string, h func(Request, Response)) error{
 
 	}
 	route := &Route{
-		method:	m,
-		path: p,
+		method:  m,
+		path:    p,
 		handler: h,
-		params: params}
+		params:  params}
 	r.routes = append(r.routes, route)
 	return nil
 }
 
-
 // Router main function. Find the matching route and call registered handlers.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	pathToMatch := strings.TrimRight(req.RequestURI, "/")
-	if strings.LastIndex(pathToMatch, "?") != -1{
+	if strings.LastIndex(pathToMatch, "?") != -1 {
 		pathToMatch = pathToMatch[:strings.LastIndex(pathToMatch, "?")]
 	}
-	for _, route := range r.routes{
+	for _, route := range r.routes {
 		if req.Method == route.method {
-			match, _ := regexp.MatchString("^" + strings.TrimRight(route.path, "/") +  "$", pathToMatch)
+			match, _ := regexp.MatchString("^"+strings.TrimRight(route.path, "/")+"$", pathToMatch)
 
-			if match{
+			if match {
 				route.handler(NewRequest(req), NewResponse(w))
 				return
 			}
