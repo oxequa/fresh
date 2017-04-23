@@ -13,7 +13,7 @@ type (
 	Request interface {
 		QueryString() string
 		QueryParam(string) string
-		//Param(string) string
+		URLParam(string) string
 		Body() io.ReadCloser
 		Map(interface{})
 		Form() url.Values
@@ -37,6 +37,11 @@ func(req * request) QueryString() string{
 
 // Get a query string parameter
 func(req * request) QueryParam(k string) string{
+	return req.r.URL.Query().Get(k)
+}
+
+// Get a URL parameter
+func(req * request) URLParam(k string) string{
 	return req.r.URL.Query().Get(k)
 }
 

@@ -3,6 +3,7 @@ package fresh
 import (
 	"net/http"
 	"strings"
+	"regexp"
 )
 
 
@@ -14,6 +15,7 @@ type Route struct {
 	handler func(Request, Response)
 	before	func()
 	after 	func()
+	params	[]string
 }
 
 
@@ -23,10 +25,25 @@ type Router struct {
 }
 
 func (r *Router) Register(m string, p string, h func(Request, Response)) error{
+	params := []string{}
+	for {
+		s := strings.Index(p, "{")
+		e := strings.Index(p, "}")
+		if s == -1 {
+			break
+		}
+		if e == -1 {
+			panic("URL template error: missing brackets.")
+		}
+		params = append(params, p[s+1:e])
+		p = strings.Replace(p, p[s:e+1], ".([^/W]+)", 1)
+
+	}
 	route := &Route{
 		method:	m,
 		path: p,
-		handler: h}
+		handler: h,
+		params: params}
 	r.routes = append(r.routes, route)
 	return nil
 }
@@ -35,11 +52,17 @@ func (r *Router) Register(m string, p string, h func(Request, Response)) error{
 // Router main function. Find the matching route and call registered handlers.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	pathToMatch := strings.TrimRight(req.RequestURI, "/")
-	pathToMatch = pathToMatch[:strings.LastIndex(pathToMatch, "?")]
+	if strings.LastIndex(pathToMatch, "?") != -1{
+		pathToMatch = pathToMatch[:strings.LastIndex(pathToMatch, "?")]
+	}
 	for _, route := range r.routes{
-		if req.Method == route.method && strings.TrimRight(route.path, "/") == pathToMatch {
-			route.handler(NewRequest(req), NewResponse(w))
-			return
+		if req.Method == route.method {
+			match, _ := regexp.MatchString("^" + strings.TrimRight(route.path, "/") +  "$", pathToMatch)
+
+			if match{
+				route.handler(NewRequest(req), NewResponse(w))
+				return
+			}
 		}
 	}
 
