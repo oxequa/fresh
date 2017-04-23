@@ -1,13 +1,13 @@
 package fresh
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"context"
 	"time"
 )
 
@@ -22,30 +22,27 @@ type (
 		Delete(string, func(Request, Response)) error
 	}
 	fresh struct {
-		config  *config
-		router  *Router
-		server  *http.Server
+		config *config
+		router *Router
+		server *http.Server
 	}
 )
-
 
 // Initialize main Fresh structure
 func New() Fresh {
 	fresh := fresh{}
-	if fresh.config.read() != nil{
+	if fresh.config.read() != nil {
 		// return with default params
 		return &fresh
 	}
 	return &fresh
 }
 
-
-
 // Load all servers configurations and start them
-func (f *fresh) Run() error{
+func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	listener, err := net.Listen("tcp", f.config.host + ":" + f.config.port)
+	listener, err := net.Listen("tcp", f.config.host+":"+f.config.port)
 	if err != nil {
 		return err
 	}
@@ -61,29 +58,27 @@ func (f *fresh) Run() error{
 	return nil
 }
 
-
-
 // Register for GET APIs
-func (f *fresh) Get(p string, h func(Request, Response)) error{
+func (f *fresh) Get(p string, h func(Request, Response)) error {
 	return f.router.Register("GET", p, h)
 }
 
 // Register for POST APIs
-func (f *fresh) Post(p string, h func(Request, Response)) error{
+func (f *fresh) Post(p string, h func(Request, Response)) error {
 	return f.router.Register("POST", p, h)
 }
 
 // Register for PUT APIs
-func (f *fresh) Put(p string, h func(Request, Response)) error{
+func (f *fresh) Put(p string, h func(Request, Response)) error {
 	return f.router.Register("PUT", p, h)
 }
 
 // Register for PATCH APIs
-func (f *fresh) Patch(p string, h func(Request, Response)) error{
+func (f *fresh) Patch(p string, h func(Request, Response)) error {
 	return f.router.Register("PATCH", p, h)
 }
 
 // Register for DELETE APIs
-func (f *fresh) Delete(p string, h func(Request, Response)) error{
+func (f *fresh) Delete(p string, h func(Request, Response)) error {
 	return f.router.Register("DELETE", p, h)
 }
