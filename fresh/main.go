@@ -9,6 +9,7 @@ func main() {
 	// Commands
 	helpCmd := flag.NewFlagSet("", flag.ExitOnError)
 	initCmd := flag.NewFlagSet("new", flag.ExitOnError)
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 
 	// Count subcommand flag pointers
 	initG := initCmd.String("gateway", "", "Gateway pattern for microservices architecture.")
@@ -24,11 +25,11 @@ func main() {
 
 	switch os.Args[1] {
 	case "init":
-		helpCmd.Parse(os.Args[2:])
-	case "count":
 		initCmd.Parse(os.Args[2:])
+	case "start":
+		startCmd.Parse(os.Args[2:])
 	default:
-		flag.PrintDefaults()
+		// print commands list
 		os.Exit(1)
 	}
 	if helpCmd.Parsed() {
