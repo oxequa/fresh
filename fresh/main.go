@@ -20,6 +20,7 @@ func main() {
 	// os.Arg[1] will be the subcommand
 	if len(os.Args) == 1 {
 		// print commands list
+		list()
 		os.Exit(1)
 	}
 
@@ -30,6 +31,7 @@ func main() {
 		startCmd.Parse(os.Args[2:])
 	default:
 		// print commands list
+		list()
 		os.Exit(1)
 	}
 	if helpCmd.Parsed() {
