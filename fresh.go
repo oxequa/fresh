@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -30,10 +31,16 @@ type (
 
 // Initialize main Fresh structure
 func New() Fresh {
-	fresh := fresh{}
+	fresh := fresh{
+		config: &config{
+			Host: "localhost",
+			Port: 3000,
+		},
+	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
-		// return with default params
+		// create a config with default params
+		fresh.config.write(wd)
 		return &fresh
 	}
 	return &fresh
@@ -43,17 +50,17 @@ func New() Fresh {
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	listener, err := net.Listen("tcp", f.config.host+":"+f.config.port)
+	listener, err := net.Listen("tcp", f.config.Host+":"+strconv.Itoa(f.config.Port))
 	if err != nil {
 		return err
 	}
 	go func() {
-		log.Println("Server started on " + f.config.host + ":" + f.config.port)
+		log.Println("Server started on ", f.config.Host, ":", f.config.Port)
 		f.server.Handler = f.router
 		f.server.Serve(listener)
 	}()
 	<-shutdown
-	log.Println("Server shutting down...")
+	log.Println("Server shutting down")
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
 	return nil

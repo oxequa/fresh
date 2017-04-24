@@ -13,17 +13,17 @@ const (
 )
 
 type config struct {
-	port  string `json:"port,omitempty"`
-	host  string `json:"host,omitempty"`
-	ssl   bool   `json:"ssl,omitempty"`
-	limit limit  `json:"limit,omitempty"` // body limit
-	gzip  gzip   `json:"gzip,omitempty"`  // gzip config
-	cors  cors   `json:"cors,omitempty"`  // cors options
+	Port  int    `json:"port,omitempty"`
+	Host  string `json:"host,omitempty"`
+	Ssl   bool   `json:"ssl,omitempty"`
+	Limit *limit `json:"limit,omitempty"` // body limit
+	Gzip  *gzip  `json:"gzip,omitempty"`  // gzip config
+	Cors  *cors  `json:"cors,omitempty"`  // cors options
 }
 
 type limit struct {
-	status bool   `json:"status,omitempty"`
-	size   string `json:"size,omitempty"`
+	Status bool   `json:"status,omitempty"`
+	Size   string `json:"size,omitempty"`
 }
 
 type cors struct {
@@ -50,7 +50,7 @@ func (c *config) read(path string) error {
 }
 
 func (c *config) write(path string) error {
-	content, err := json.Marshal(c)
+	content, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
