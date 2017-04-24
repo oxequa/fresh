@@ -36,6 +36,8 @@ func New() Fresh {
 			Host: "localhost",
 			Port: 3000,
 		},
+		server: new(http.Server),
+		router: new(Router),
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
