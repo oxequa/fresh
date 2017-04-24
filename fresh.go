@@ -31,7 +31,8 @@ type (
 // Initialize main Fresh structure
 func New() Fresh {
 	fresh := fresh{}
-	if fresh.config.read() != nil {
+	wd, _ := os.Getwd()
+	if fresh.config.read(wd) != nil {
 		// return with default params
 		return &fresh
 	}
