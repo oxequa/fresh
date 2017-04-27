@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+	"math/rand"
 )
 
 // Main Fresh structure
@@ -32,18 +33,16 @@ type (
 // Initialize main Fresh structure
 func New() Fresh {
 	fresh := fresh{
-		config: &config{
-			Host: "localhost",
-			Port: 3000,
-		},
+		config: new(config),
 		server: new(http.Server),
 		router: new(Router),
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
-		// create a config with default params
-		fresh.config.write(wd)
-		return &fresh
+		// random ip and port
+		rand.Seed(time.Now().Unix())
+		fresh.config.Host = net.IP(make([]byte, 4)).String()
+		fresh.config.Port = rand.Intn(9999 - 1111) + 1111
 	}
 	return &fresh
 }
