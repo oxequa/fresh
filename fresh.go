@@ -41,7 +41,9 @@ func New() Fresh {
 	if fresh.config.read(wd) != nil {
 		// random ip and port
 		rand.Seed(time.Now().Unix())
-		fresh.config.Host = net.IP(make([]byte, 4)).String()
+		address := make([]byte, 4)
+		rand.Read(address)
+		fresh.config.Host = net.IP(address).String()
 		fresh.config.Port = rand.Intn(9999-1111) + 1111
 	}
 	return &fresh
