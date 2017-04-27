@@ -3,6 +3,7 @@ package fresh
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-	"math/rand"
 )
 
 // Main Fresh structure
@@ -42,7 +42,7 @@ func New() Fresh {
 		// random ip and port
 		rand.Seed(time.Now().Unix())
 		fresh.config.Host = net.IP(make([]byte, 4)).String()
-		fresh.config.Port = rand.Intn(9999 - 1111) + 1111
+		fresh.config.Port = rand.Intn(9999-1111) + 1111
 	}
 	return &fresh
 }
