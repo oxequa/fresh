@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+	"fmt"
 )
 
 // Main Fresh structure
@@ -41,9 +42,7 @@ func New() Fresh {
 	if fresh.config.read(wd) != nil {
 		// random ip and port
 		rand.Seed(time.Now().Unix())
-		address := make([]byte, 4)
-		rand.Read(address)
-		fresh.config.Host = net.IP(address).String()
+		fresh.config.Host = "localhost"
 		fresh.config.Port = rand.Intn(9999-1111) + 1111
 	}
 	return &fresh
@@ -55,6 +54,7 @@ func (f *fresh) Run() error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	listener, err := net.Listen("tcp", f.config.Host+":"+strconv.Itoa(f.config.Port))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	go func() {
