@@ -50,6 +50,11 @@ func New() Fresh {
 	return &fresh
 }
 
+// Set a list of http header fields
+func (f *fresh) Header(){
+
+}
+
 // Load all servers configurations and start them
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
