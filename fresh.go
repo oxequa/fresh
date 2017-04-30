@@ -21,8 +21,10 @@ type (
 		Get(string, func(Request, Response)) error
 		Post(string, func(Request, Response)) error
 		Put(string, func(Request, Response)) error
+		Trace(string, func(Request, Response)) error
 		Patch(string, func(Request, Response)) error
 		Delete(string, func(Request, Response)) error
+		Options(string, func(Request, Response)) error
 	}
 	fresh struct {
 		config *config
@@ -92,4 +94,14 @@ func (f *fresh) Patch(p string, h func(Request, Response)) error {
 // Register for DELETE APIs
 func (f *fresh) Delete(p string, h func(Request, Response)) error {
 	return f.router.Register("DELETE", p, h)
+}
+
+// Register for OPTIONS APIs
+func (f *fresh) Options(p string, h func(Request, Response)) error {
+	return f.router.Register("OPTIONS", p, h)
+}
+
+// Register for TRACE APIs
+func (f *fresh) Trace(p string, h func(Request, Response)) error {
+	return f.router.Register("TRACE", p, h)
 }
