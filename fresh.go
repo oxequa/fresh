@@ -31,6 +31,8 @@ type (
 		router *Router
 		server *http.Server
 	}
+
+	middleware func(context.Context) error
 )
 
 // Initialize main Fresh structure
@@ -48,11 +50,6 @@ func New() Fresh {
 		fresh.config.Port = rand.Intn(9999-1111) + 1111
 	}
 	return &fresh
-}
-
-// Set a list of http header fields
-func (f *fresh) Header() {
-
 }
 
 // Load all servers configurations and start them
