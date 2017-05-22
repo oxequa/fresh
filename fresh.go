@@ -2,6 +2,7 @@ package fresh
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"net"
@@ -11,7 +12,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-	"fmt"
 )
 
 // Main Fresh structure
@@ -51,7 +51,7 @@ func New() Fresh {
 }
 
 // Set a list of http header fields
-func (f *fresh) Header(){
+func (f *fresh) Header() {
 
 }
 
