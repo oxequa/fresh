@@ -67,6 +67,7 @@ func (f *fresh) Run() error {
 	go func() {
 		log.Println("Server started on ", f.config.Host, ":", f.config.Port)
 		f.server.Handler = f.router
+		f.router.PrintRoutes()
 		f.server.Serve(listener)
 	}()
 	<-shutdown
