@@ -2,7 +2,7 @@ package fresh
 
 import (
 	"encoding/json"
-	"github.com/tockins/realize/settings"
+	"github.com/tockins/fresh/settings"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,9 +14,9 @@ const (
 )
 
 type config struct {
-	Port  int    `json:"port,omitempty"`
-	Host  string `json:"host,omitempty"`
-	Sever *settings.Config
+	Port   int    `json:"port,omitempty"`
+	Host   string `json:"host,omitempty"`
+	Server settings.Config
 }
 
 func (c *config) read(path string) error {

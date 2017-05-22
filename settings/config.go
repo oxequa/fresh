@@ -1,4 +1,4 @@
-package srv
+package settings
 
 type Config struct {
 	Ssl     bool     `json:"ssl,omitempty"`
