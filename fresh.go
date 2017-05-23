@@ -83,9 +83,9 @@ func (f *fresh) Run() error {
 
 // Routes group
 func (f *fresh) Group(path string, handlers []HttpFunc, middleware ...HandlerFunc) error {
-	for _, handler := range handlers {
-		//reflect
-	}
+	//for _, handler := range handlers {
+	//	//reflect
+	//}
 	return nil
 }
 
