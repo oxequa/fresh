@@ -89,13 +89,35 @@ func (r *Router) Register(method string, path string, handler HandlerFunc) error
 }
 
 // Router main function. Find the matching route and call registered handlers.
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
+func (r *Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	var tree func([]*Route) bool
+	tree = func(routes []*Route) bool {
+		for _, route := range routes {
+			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/"){
+				for _, handler := range route.handlers {
+					if handler.method == request.Method{
+						handler.Handler(&Context{
+							Request: NewRequest(request),
+							Response: NewResponse(writer),
+						})
+						return true
+					}
+
+				}
+			}
+			return tree(route.children)
+		}
+		return false
+	}
+	if !tree(r.routes) {
+		writer.WriteHeader(http.StatusNotFound)
+	}
+
 }
 
 // Add handler in a route
 func (route *Route) addHandler(method string, handler HandlerFunc) {
-	// if already exist an entry for the method change related handler
+	// If already exist an entry for the method change related handler
 	changeHandler := func() bool {
 		for _, h := range route.handlers {
 			if h.method == method {

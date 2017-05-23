@@ -1,7 +1,7 @@
 package fresh
 
 import (
-	"context"
+	httpContext "context"
 	"log"
 	"math/rand"
 	"net"
@@ -33,12 +33,15 @@ type (
 		server *http.Server
 	}
 
-	Context interface {
-		Request
-		Response
+
+
+	Context struct{
+		Request Request
+		Response Response
+
 	}
 
-	HandlerFunc func(Context) error
+	HandlerFunc func(*Context) error
 
 	HttpFunc func(string, HandlerFunc) error
 )
@@ -76,7 +79,7 @@ func (f *fresh) Run() error {
 	}()
 	<-shutdown
 	log.Println("Server shutting down")
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, _ := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
 	return nil
 }
