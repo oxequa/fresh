@@ -17,10 +17,10 @@ type Route struct {
 
 type Handler struct {
 	method     string
-	Handler    func(Request, Response)
-	before     []func()
-	after      []func()
-	middelware []func()
+	Handler    HandlerFunc
+	before     []MiddlewareFunc
+	after      []MiddlewareFunc
+	middelware []MiddlewareFunc
 }
 
 // Router structure
@@ -28,13 +28,12 @@ type Router struct {
 	routes []*Route
 }
 
-func (r *Router) Register(method string, path string, handler func(Request, Response)) error {
-	path = strings.Trim(path, "/")
-	r.newRoute(nil, method, path, handler)
+func (r *Router) Register(method string, path string, handler HandlerFunc) error {
+	r.newRoute(nil, method, strings.Trim(path, "/"), handler)
 	return nil
 }
 
-func (r *Router) newRoute(parentRoute *Route, method string, path string, handler func(Request, Response)) *Route {
+func (r *Router) newRoute(parentRoute *Route, method string, path string, handler HandlerFunc) *Route {
 	pathNodes := []string{}
 
 	if parentRoute != nil {
@@ -96,7 +95,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // Add handler in a route
-func (route *Route) addHandler(method string, handler func(Request, Response)) {
+func (route *Route) addHandler(method string, handler HandlerFunc) {
 	// if already exist an entry for the method change related handler
 	changeHandler := func() bool {
 		for _, h := range route.handlers {
