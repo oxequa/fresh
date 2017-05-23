@@ -15,10 +15,6 @@ type (
 	}
 )
 
-func Res(code int, body interface{}) Response {
-	return &response{}
-}
-
 // Response constructor
 func NewResponse(w http.ResponseWriter) Response {
 	w.Header().Set("Content-Type", "application/json")
