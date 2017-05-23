@@ -17,6 +17,7 @@ import (
 type (
 	Fresh interface {
 		Run() error
+		Group(string, []HttpFunc, ...HandlerFunc) error
 		Get(string, HandlerFunc) error
 		Post(string, HandlerFunc) error
 		Put(string, HandlerFunc) error
@@ -25,20 +26,21 @@ type (
 		Delete(string, HandlerFunc) error
 		Options(string, HandlerFunc) error
 	}
+
 	fresh struct {
 		config *config
 		router *Router
 		server *http.Server
 	}
 
-	MiddlewareFunc func(context.Context) error
-
-	HandlerFunc func(Request, Response) HTTPError
-
-	HTTPError struct {
-		Code int
-		Body interface{}
+	Context interface {
+		Request
+		Response
 	}
+
+	HandlerFunc func(Context) error
+
+	HttpFunc func(string, HandlerFunc) error
 )
 
 // Initialize main Fresh structure
@@ -76,6 +78,14 @@ func (f *fresh) Run() error {
 	log.Println("Server shutting down")
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
+	return nil
+}
+
+// Routes group
+func (f *fresh) Group(path string, handlers []HttpFunc, middleware ...HandlerFunc) error {
+	for _, handler := range handlers {
+		//reflect
+	}
 	return nil
 }
 

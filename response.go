@@ -5,7 +5,6 @@ import (
 	"net/http"
 )
 
-// Response structure
 type (
 	Response interface {
 		Write(int, interface{})
@@ -15,6 +14,10 @@ type (
 		w http.ResponseWriter
 	}
 )
+
+func Res(code int, body interface{}) Response {
+	return &response{}
+}
 
 // Response constructor
 func NewResponse(w http.ResponseWriter) Response {

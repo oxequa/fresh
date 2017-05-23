@@ -18,9 +18,9 @@ type Route struct {
 type Handler struct {
 	method     string
 	Handler    HandlerFunc
-	before     []MiddlewareFunc
-	after      []MiddlewareFunc
-	middelware []MiddlewareFunc
+	before     []HandlerFunc
+	after      []HandlerFunc
+	middelware []HandlerFunc
 }
 
 // Router structure
@@ -28,65 +28,64 @@ type Router struct {
 	routes []*Route
 }
 
+// Register a route with its handlers
 func (r *Router) Register(method string, path string, handler HandlerFunc) error {
-	r.newRoute(nil, method, strings.Trim(path, "/"), handler)
-	return nil
-}
-
-func (r *Router) newRoute(parentRoute *Route, method string, path string, handler HandlerFunc) *Route {
-	pathNodes := []string{}
-
-	if parentRoute != nil {
-		pathNodes = strings.Split(path, "/")
-		if len(pathNodes) == len(parentRoute.path) {
-			pathNodes = []string{}
+	var new func(*Route, string, string, HandlerFunc) *Route
+	new = func(parentRoute *Route, method string, path string, handler HandlerFunc) *Route {
+		pathNodes := []string{}
+		if parentRoute != nil {
+			pathNodes = strings.Split(path, "/")
+			if len(pathNodes) == len(parentRoute.path) {
+				pathNodes = []string{}
+			} else {
+				pathNodes = pathNodes[len(parentRoute.path):]
+			}
 		} else {
-			pathNodes = pathNodes[len(parentRoute.path):]
+			pathNodes = strings.Split(path, "/")
 		}
-	} else {
-		pathNodes = strings.Split(path, "/")
-	}
-	if len(pathNodes) == 0 {
-		parentRoute.addHandler(method, handler)
-		return parentRoute
-	}
-	found := false
-	if parentRoute != nil {
-		for _, route := range parentRoute.children {
-			if route.path[len(route.path)-1] == pathNodes[0] {
-				parentRoute = route
-				found = true
-				break
-			}
+		if len(pathNodes) == 0 {
+			parentRoute.addHandler(method, handler)
+			return parentRoute
 		}
-		if found != true {
-			newRoute := &Route{
-				path:   append(parentRoute.path, pathNodes[0]),
-				parent: parentRoute,
+		found := false
+		if parentRoute != nil {
+			for _, route := range parentRoute.children {
+				if route.path[len(route.path)-1] == pathNodes[0] {
+					parentRoute = route
+					found = true
+					break
+				}
 			}
-			parentRoute.children = append(parentRoute.children, newRoute)
-			parentRoute = newRoute
+			if found != true {
+				newRoute := &Route{
+					path:   append(parentRoute.path, pathNodes[0]),
+					parent: parentRoute,
+				}
+				parentRoute.children = append(parentRoute.children, newRoute)
+				parentRoute = newRoute
 
-		}
-	} else {
-		for _, route := range r.routes {
-			if route.path[len(route.path)-1] == pathNodes[0] {
-				parentRoute = route
-				found = true
-				break
+			}
+		} else {
+			for _, route := range r.routes {
+				if route.path[len(route.path)-1] == pathNodes[0] {
+					parentRoute = route
+					found = true
+					break
+				}
+			}
+			if found != true {
+				newRoute := &Route{
+					path:   []string{pathNodes[0]},
+					parent: parentRoute,
+				}
+				r.routes = append(r.routes, newRoute)
+				parentRoute = newRoute
 			}
 		}
-		if found != true {
-			newRoute := &Route{
-				path:   []string{pathNodes[0]},
-				parent: parentRoute,
-			}
-			r.routes = append(r.routes, newRoute)
-			parentRoute = newRoute
-		}
+		return new(parentRoute, method, path, handler)
 	}
-
-	return r.newRoute(parentRoute, method, path, handler)
+	new(nil, method, strings.Trim(path, "/"), handler)
+	return nil
 }
 
 // Router main function. Find the matching route and call registered handlers.
@@ -112,6 +111,7 @@ func (route *Route) addHandler(method string, handler HandlerFunc) {
 	}
 }
 
+// Print the list of routes
 func (r *Router) PrintRoutes() {
 	var tree func([]*Route) error
 	tree = func(routes []*Route) error {
