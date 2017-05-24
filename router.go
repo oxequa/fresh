@@ -8,11 +8,12 @@ import (
 
 // Route structure
 type Route struct {
-	path     []string
-	handlers []Handler
-	params   []string
-	parent   *Route
-	children []*Route
+	path       []string
+	handlers   []Handler
+	params     []string
+	parent     *Route
+	children   []*Route
+	middleware []HandlerFunc
 }
 
 type Handler struct {
@@ -93,11 +94,11 @@ func (r *Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var tree func([]*Route) (bool, error)
 	tree = func(routes []*Route) (bool, error) {
 		for _, route := range routes {
-			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/"){
+			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
 				for _, handler := range route.handlers {
-					if handler.method == request.Method{
+					if handler.method == request.Method {
 						return true, handler.Handler(&Context{
-							Request: NewRequest(request),
+							Request:  NewRequest(request),
 							Response: NewResponse(writer),
 						})
 					}
@@ -110,7 +111,7 @@ func (r *Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	}
 	if found, err := tree(r.routes); found && err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
-	} else if(!found){
+	} else if !found {
 		writer.WriteHeader(http.StatusNotFound)
 	}
 

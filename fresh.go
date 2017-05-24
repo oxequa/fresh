@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -17,7 +18,7 @@ import (
 type (
 	Fresh interface {
 		Run() error
-		Group(string, []HttpFunc, ...HandlerFunc) error
+		Group(string, ...HandlerFunc) Fresh
 		Get(string, HandlerFunc) error
 		Post(string, HandlerFunc) error
 		Put(string, HandlerFunc) error
@@ -28,22 +29,18 @@ type (
 	}
 
 	fresh struct {
+		group  *Route
 		config *config
 		router *Router
 		server *http.Server
 	}
 
-
-
-	Context struct{
-		Request Request
+	Context struct {
+		Request  Request
 		Response Response
-
 	}
 
 	HandlerFunc func(*Context) error
-
-	HttpFunc func(string, HandlerFunc) error
 )
 
 // Initialize main Fresh structure
@@ -85,11 +82,11 @@ func (f *fresh) Run() error {
 }
 
 // Routes group
-func (f *fresh) Group(path string, handlers []HttpFunc, middleware ...HandlerFunc) error {
-	//for _, handler := range handlers {
-	//	//reflect
-	//}
-	return nil
+func (f *fresh) Group(path string, handlers ...HandlerFunc) Fresh {
+	f.group = &Route{}
+	f.group.path = strings.Split(path, "/")
+	f.group.middleware = append(f.group.middleware, handlers...)
+	return f
 }
 
 // Register for GET APIs
