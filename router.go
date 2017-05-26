@@ -30,9 +30,9 @@ type Router struct {
 }
 
 // Register a route with its handlers
-func (r *Router) Register(method string, path string, handler HandlerFunc) error {
-	var new func(*Route, string, string, HandlerFunc) *Route
-	new = func(parentRoute *Route, method string, path string, handler HandlerFunc) *Route {
+func (r *Router) Register(method string, path string, group *Route, handlers ...HandlerFunc) error {
+	var new func(*Route, string, string, ...HandlerFunc) *Route
+	new = func(parentRoute *Route, method string, path string, handlers ...HandlerFunc) *Route {
 		pathNodes := []string{}
 		if parentRoute != nil {
 			pathNodes = strings.Split(path, "/")
@@ -45,9 +45,10 @@ func (r *Router) Register(method string, path string, handler HandlerFunc) error
 			pathNodes = strings.Split(path, "/")
 		}
 		if len(pathNodes) == 0 {
-			parentRoute.addHandler(method, handler)
+			parentRoute.addHandler(method, handlers[0])
 			return parentRoute
 		}
+
 		found := false
 		if parentRoute != nil {
 			for _, route := range parentRoute.children {
@@ -64,7 +65,6 @@ func (r *Router) Register(method string, path string, handler HandlerFunc) error
 				}
 				parentRoute.children = append(parentRoute.children, newRoute)
 				parentRoute = newRoute
-
 			}
 		} else {
 			for _, route := range r.routes {
@@ -83,9 +83,16 @@ func (r *Router) Register(method string, path string, handler HandlerFunc) error
 				parentRoute = newRoute
 			}
 		}
-		return new(parentRoute, method, path, handler)
+		return new(parentRoute, method, path, handlers...)
 	}
-	new(nil, method, strings.Trim(path, "/"), handler)
+
+	// check a group
+	if group != nil{
+		groupPath := strings.Join(group.path, "/")
+		handlers = append(handlers, group.middleware...)
+		path = groupPath + "/" + path
+	}
+	new(nil, method, strings.Trim(path, "/"), handlers...)
 	return nil
 }
 
@@ -143,7 +150,7 @@ func (r *Router) PrintRoutes() {
 			for _, handler := range route.handlers {
 				log.Println(handler.method + " - " + strings.Join(route.path, "/"))
 			}
-			return tree(route.children)
+			tree(route.children)
 		}
 		return nil
 	}

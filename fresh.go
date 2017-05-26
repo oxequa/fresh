@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
+	"strings"
 )
 
 // Main Fresh structure
@@ -19,13 +19,13 @@ type (
 	Fresh interface {
 		Run() error
 		Group(string, ...HandlerFunc) Fresh
-		Get(string, HandlerFunc) error
-		Post(string, HandlerFunc) error
-		Put(string, HandlerFunc) error
-		Trace(string, HandlerFunc) error
-		Patch(string, HandlerFunc) error
-		Delete(string, HandlerFunc) error
-		Options(string, HandlerFunc) error
+		Get(string, ...HandlerFunc) error
+		Post(string, ...HandlerFunc) error
+		Put(string, ...HandlerFunc) error
+		Trace(string, ...HandlerFunc) error
+		Patch(string, ...HandlerFunc) error
+		Delete(string, ...HandlerFunc) error
+		Options(string, ...HandlerFunc) error
 	}
 
 	fresh struct {
@@ -81,45 +81,45 @@ func (f *fresh) Run() error {
 	return nil
 }
 
-// Routes group
-func (f *fresh) Group(path string, handlers ...HandlerFunc) Fresh {
+// Register a group
+func (f fresh) Group(path string, middleware ...HandlerFunc) Fresh {
 	f.group = &Route{}
 	f.group.path = strings.Split(path, "/")
-	f.group.middleware = append(f.group.middleware, handlers...)
-	return f
+	f.group.middleware = append(f.group.middleware, middleware...)
+	return &f
 }
 
 // Register for GET APIs
-func (f *fresh) Get(path string, handler HandlerFunc) error {
-	return f.router.Register("GET", path, handler)
+func (f *fresh) Get(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("GET", path, f.group, handlers...)
 }
 
 // Register for POST APIs
-func (f *fresh) Post(path string, handler HandlerFunc) error {
-	return f.router.Register("POST", path, handler)
+func (f *fresh) Post(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("POST", path, f.group, handlers...)
 }
 
 // Register for PUT APIs
-func (f *fresh) Put(path string, handler HandlerFunc) error {
-	return f.router.Register("PUT", path, handler)
+func (f *fresh) Put(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("PUT", path, f.group, handlers...)
 }
 
 // Register for PATCH APIs
-func (f *fresh) Patch(path string, handler HandlerFunc) error {
-	return f.router.Register("PATCH", path, handler)
+func (f *fresh) Patch(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("PATCH", path, f.group, handlers...)
 }
 
 // Register for DELETE APIs
-func (f *fresh) Delete(path string, handler HandlerFunc) error {
-	return f.router.Register("DELETE", path, handler)
+func (f *fresh) Delete(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("DELETE", path, f.group, handlers...)
 }
 
 // Register for OPTIONS APIs
-func (f *fresh) Options(path string, handler HandlerFunc) error {
-	return f.router.Register("OPTIONS", path, handler)
+func (f *fresh) Options(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("OPTIONS", path, f.group, handlers...)
 }
 
 // Register for TRACE APIs
-func (f *fresh) Trace(path string, handler HandlerFunc) error {
-	return f.router.Register("TRACE", path, handler)
+func (f *fresh) Trace(path string, handlers ...HandlerFunc) error {
+	return f.router.Register("TRACE", path, f.group, handlers...)
 }
