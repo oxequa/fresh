@@ -1,7 +1,6 @@
 package fresh
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"reflect"
