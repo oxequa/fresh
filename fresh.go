@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
-	"strings"
 )
 
 // Main Fresh structure
@@ -71,7 +71,7 @@ func (f *fresh) Run() error {
 	go func() {
 		log.Println("Server started on ", f.config.Host, ":", f.config.Port)
 		f.server.Handler = f.router
-		f.router.PrintRoutes()
+		f.router.printRoutes()
 		f.server.Serve(listener)
 	}()
 	<-shutdown
@@ -91,35 +91,35 @@ func (f fresh) Group(path string, middleware ...HandlerFunc) Fresh {
 
 // Register for GET APIs
 func (f *fresh) Get(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("GET", path, f.group, handlers...)
+	return f.router.register("GET", path, f.group, handlers...)
 }
 
 // Register for POST APIs
 func (f *fresh) Post(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("POST", path, f.group, handlers...)
+	return f.router.register("POST", path, f.group, handlers...)
 }
 
 // Register for PUT APIs
 func (f *fresh) Put(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("PUT", path, f.group, handlers...)
+	return f.router.register("PUT", path, f.group, handlers...)
 }
 
 // Register for PATCH APIs
 func (f *fresh) Patch(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("PATCH", path, f.group, handlers...)
+	return f.router.register("PATCH", path, f.group, handlers...)
 }
 
 // Register for DELETE APIs
 func (f *fresh) Delete(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("DELETE", path, f.group, handlers...)
+	return f.router.register("DELETE", path, f.group, handlers...)
 }
 
 // Register for OPTIONS APIs
 func (f *fresh) Options(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("OPTIONS", path, f.group, handlers...)
+	return f.router.register("OPTIONS", path, f.group, handlers...)
 }
 
 // Register for TRACE APIs
 func (f *fresh) Trace(path string, handlers ...HandlerFunc) error {
-	return f.router.Register("TRACE", path, f.group, handlers...)
+	return f.router.register("TRACE", path, f.group, handlers...)
 }
