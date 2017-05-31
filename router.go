@@ -122,7 +122,6 @@ func (r *Router) register(method string, path string, group *Route, handlers ...
 	if group != nil {
 		groupPath := strings.Join(group.path, "/")
 		handlers = append(handlers[:1], append(group.middleware, handlers[1:]...)...)
-		fmt.Println(handlers)
 		path = groupPath + "/" + path
 	}
 	new(nil, method, strings.Trim(path, "/"), handlers...)
