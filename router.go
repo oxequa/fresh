@@ -1,6 +1,7 @@
 package fresh
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -120,7 +121,8 @@ func (r *Router) register(method string, path string, group *Route, handlers ...
 	// check a group
 	if group != nil {
 		groupPath := strings.Join(group.path, "/")
-		handlers = append(handlers, group.middleware...)
+		handlers = append(handlers[:1], append(group.middleware, handlers[1:]...)...)
+		fmt.Println(handlers)
 		path = groupPath + "/" + path
 	}
 	new(nil, method, strings.Trim(path, "/"), handlers...)
