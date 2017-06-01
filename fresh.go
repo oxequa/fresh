@@ -105,8 +105,7 @@ func (f *fresh) Resource(path string, handlers ...HandlerFunc) (err error) {
 			err = f.router.register(method, path, f.group, handlers[0])
 		case "POST":
 			err = f.router.register(method, path+"/"+name, f.group, handlers[1])
-		case "PUT":
-		case "PATCH":
+		case "PUT", "PATCH":
 			err = f.router.register(method, path+"/"+name, f.group, handlers[2])
 		case "DELETE":
 			err = f.router.register(method, path+"/"+name, f.group, handlers[3])
