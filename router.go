@@ -119,11 +119,11 @@ func (r *Router) register(method string, path string, group *Route, handlers ...
 
 	// check a group
 	if group != nil {
-		groupPath := strings.Join(group.path, "/")
+		// route middleware after group middleware
 		handlers = append(handlers[:1], append(group.middleware, handlers[1:]...)...)
-		path = groupPath + "/" + path
+		path = strings.Trim(strings.Join(group.path, "/"), "/") + "/" + strings.Trim(path, "/")
 	}
-	new(nil, method, strings.Trim(path, "/"), handlers...)
+	new(nil, method, path, handlers...)
 	return nil
 }
 
@@ -167,8 +167,19 @@ func (r *Router) printRoutes() {
 	tree(r.routes)
 }
 
+// Return the func name
 func getFuncName(f interface{}) string {
 	path := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 	name := strings.Split(path, "/")
 	return name[len(name)-1]
+}
+
+func clean(s []string) []string {
+	var r []string
+	for _, str := range s {
+		if str != "" {
+			r = append(r, str)
+		}
+	}
+	return r
 }

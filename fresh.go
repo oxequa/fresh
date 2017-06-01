@@ -19,6 +19,7 @@ type (
 	Fresh interface {
 		Run() error
 		Group(string, ...HandlerFunc) Fresh
+		Resource(string, ...HandlerFunc) error
 		Get(string, ...HandlerFunc) error
 		Post(string, ...HandlerFunc) error
 		Put(string, ...HandlerFunc) error
@@ -87,6 +88,33 @@ func (f fresh) Group(path string, middleware ...HandlerFunc) Fresh {
 	f.group.path = strings.Split(path, "/")
 	f.group.middleware = append(f.group.middleware, middleware...)
 	return &f
+}
+
+// Register a resource (get, post, put, delete)
+func (f *fresh) Resource(path string, handlers ...HandlerFunc) (err error) {
+	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
+	path = strings.Trim(path, "/")
+	name := path
+	if strings.LastIndex(path, "/") != -1 {
+		name = string(path[strings.LastIndex(path, "/")+1:])
+	}
+	for _, method := range methods {
+		switch method {
+		case "GET":
+			err = f.router.register(method, path, f.group, handlers[0])
+		case "POST":
+			err = f.router.register(method, path+"/"+name, f.group, handlers[1])
+		case "PUT":
+		case "PATCH":
+			err = f.router.register(method, path+"/"+name, f.group, handlers[2])
+		case "DELETE":
+			err = f.router.register(method, path+"/"+name, f.group, handlers[3])
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Register for GET APIs
