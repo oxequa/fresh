@@ -98,6 +98,7 @@ func (f *fresh) Resource(path string, handlers ...HandlerFunc) (err error) {
 	if strings.LastIndex(path, "/") != -1 {
 		name = string(path[strings.LastIndex(path, "/")+1:])
 	}
+	name = "{" + name + "}"
 	for _, method := range methods {
 		switch method {
 		case "GET":
