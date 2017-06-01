@@ -94,21 +94,29 @@ func (f fresh) Group(path string, middleware ...HandlerFunc) Fresh {
 func (f *fresh) Resource(path string, handlers ...HandlerFunc) (err error) {
 	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 	path = strings.Trim(path, "/")
-	name := path
+	name := "{" + path + "}"
+	h := []HandlerFunc{}
 	if strings.LastIndex(path, "/") != -1 {
-		name = string(path[strings.LastIndex(path, "/")+1:])
+		name = string("{" + path[strings.LastIndex(path, "/")+1:] + "}")
 	}
-	name = "{" + name + "}"
 	for _, method := range methods {
 		switch method {
 		case "GET":
-			err = f.router.register(method, path, f.group, handlers[0])
+			h = []HandlerFunc{handlers[0]}
+			h = append(h, handlers[4:]...)
+			err = f.router.register(method, path, f.group, h...)
 		case "POST":
-			err = f.router.register(method, path+"/"+name, f.group, handlers[1])
+			h = []HandlerFunc{handlers[1]}
+			h = append(h, handlers[4:]...)
+			err = f.router.register(method, path+"/"+name, f.group, h...)
 		case "PUT", "PATCH":
-			err = f.router.register(method, path+"/"+name, f.group, handlers[2])
+			h = []HandlerFunc{handlers[2]}
+			h = append(h, handlers[4:]...)
+			err = f.router.register(method, path+"/"+name, f.group, h...)
 		case "DELETE":
-			err = f.router.register(method, path+"/"+name, f.group, handlers[3])
+			h = []HandlerFunc{handlers[3]}
+			h = append(h, handlers[4:]...)
+			err = f.router.register(method, path+"/"+name, f.group, h...)
 		}
 		if err != nil {
 			return err
