@@ -8,38 +8,57 @@ import (
 	"strings"
 )
 
-// Route structure
-type Route struct {
-	path       []string
-	handlers   []Handler
-	params     []string
-	parent     *Route
-	children   []*Route
-	middleware []HandlerFunc
-}
+// Handler structure
+type (
+	Handler interface {
+		After(...HandlerFunc) Handler
+		Before(...HandlerFunc) Handler
+	}
+	handler struct {
+		method string
+		ctrl   HandlerFunc
+		before []HandlerFunc
+		after  []HandlerFunc
+	}
+)
 
-type Handler struct {
-	method     string
-	Handler    HandlerFunc
-	before     []HandlerFunc
-	after      []HandlerFunc
-	middelware []HandlerFunc
+// Route structure
+type route struct {
+	path     []string
+	handlers []*handler
+	params   []string
+	parent   *route
+	children []*route
+	after    []HandlerFunc
+	before   []HandlerFunc
 }
 
 // Router structure
-type Router struct {
-	routes []*Route
+type router struct {
+	routes []*route
+}
+
+// After middleware
+func (h *handler) After(middleware ...HandlerFunc) Handler {
+	h.after = append(h.after, middleware...)
+	return h
+}
+
+// Before middleware
+func (h *handler) Before(middleware ...HandlerFunc) Handler {
+	h.before = append(h.before, middleware...)
+	return h
 }
 
 // Router main function. Find the matching route and call registered handlers.
-func (r *Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	var tree func([]*Route) (bool, error)
-	tree = func(routes []*Route) (bool, error) {
+func (r *router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	var tree func([]*route) (bool, error)
+	tree = func(routes []*route) (bool, error) {
 		for _, route := range routes {
 			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
 				for _, handler := range route.handlers {
 					if handler.method == request.Method {
-						return true, handler.Handler(&Context{
+						return true, handler.ctrl(&Context{
 							Request:  NewRequest(request),
 							Response: NewResponse(writer),
 						})
@@ -60,104 +79,103 @@ func (r *Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 }
 
 // Register a route with its handlers
-func (r *Router) register(method string, path string, group *Route, handlers ...HandlerFunc) error {
-	var new func(*Route, string, string, ...HandlerFunc) *Route
-	new = func(parentRoute *Route, method string, path string, handlers ...HandlerFunc) *Route {
-		pathNodes := []string{}
-		if parentRoute != nil {
-			pathNodes = strings.Split(path, "/")
-			if len(pathNodes) == len(parentRoute.path) {
-				pathNodes = []string{}
-			} else {
-				pathNodes = pathNodes[len(parentRoute.path):]
-			}
-		} else {
-			pathNodes = strings.Split(path, "/")
-		}
-		if len(pathNodes) == 0 {
-			// handlers and middleware association
-			parentRoute.addHandler(method, handlers[0], handlers[1:]...)
-			return parentRoute
-		}
-
-		found := false
-		if parentRoute != nil {
-			for _, route := range parentRoute.children {
-				if route.path[len(route.path)-1] == pathNodes[0] {
-					parentRoute = route
-					found = true
-					break
-				}
-			}
-			if found != true {
-				newRoute := &Route{
-					path:   append(parentRoute.path, pathNodes[0]),
-					parent: parentRoute,
-				}
-				parentRoute.children = append(parentRoute.children, newRoute)
-				parentRoute = newRoute
-			}
-		} else {
-			for _, route := range r.routes {
-				if route.path[len(route.path)-1] == pathNodes[0] {
-					parentRoute = route
-					found = true
-					break
-				}
-			}
-			if found != true {
-				newRoute := &Route{
-					path:   []string{pathNodes[0]},
-					parent: parentRoute,
-				}
-				r.routes = append(r.routes, newRoute)
-				parentRoute = newRoute
-			}
-		}
-		return new(parentRoute, method, path, handlers...)
-	}
-
-	// check a group
+func (r *router) register(method string, path string, group *route, handler HandlerFunc) Handler {
 	if group != nil {
 		// route middleware after group middleware
-		handlers = append(handlers[:1], append(group.middleware, handlers[1:]...)...)
-		path = strings.Trim(strings.Join(group.path, "/"), "/") + "/" + strings.Trim(path, "/")
+		path = strings.Trim(strings.Trim(strings.Join(group.path, "/"), "/")+"/"+strings.Trim(path, "/"), "/")
+		response := r.scan(nil, method, path, handler)
+		if group.after != nil {
+			response.After(group.after...)
+		}
+		if group.before != nil {
+			response.Before(group.before...)
+		}
+		return response
 	}
-	new(nil, method, path, handlers...)
-	return nil
+	return r.scan(nil, method, path, handler)
 }
 
-// Add handlers in a route
-func (route *Route) addHandler(method string, handler HandlerFunc, middleware ...HandlerFunc) {
-	// If already exist an entry for the method change related handler
-	changeHandler := func() bool {
-		for _, h := range route.handlers {
-			if h.method == method {
-				h.Handler = handler
-				h.middelware = append(h.middelware, middleware...)
-				return false
+// Scan the routes tree
+func (r *router) scan(parent *route, method string, path string, handler HandlerFunc) Handler {
+	pathNodes := []string{}
+	if parent != nil {
+		pathNodes = strings.Split(path, "/")
+		if len(pathNodes) == len(parent.path) {
+			pathNodes = []string{}
+		} else {
+			pathNodes = pathNodes[len(parent.path):]
+		}
+	} else {
+		pathNodes = strings.Split(path, "/")
+	}
+	if len(pathNodes) == 0 {
+		// handlers and middleware association
+		return parent.add(method, handler)
+	}
+
+	found := false
+	if parent != nil {
+		for _, route := range parent.children {
+			if route.path[len(route.path)-1] == pathNodes[0] {
+				parent = route
+				found = true
+				break
 			}
 		}
-		return true
+		if found != true {
+			newRoute := &route{
+				path:   append(parent.path, pathNodes[0]),
+				parent: parent,
+			}
+			parent.children = append(parent.children, newRoute)
+			parent = newRoute
+		}
+	} else {
+		for _, route := range r.routes {
+			if route.path[len(route.path)-1] == pathNodes[0] {
+				parent = route
+				found = true
+				break
+			}
+		}
+		if found != true {
+			newRoute := &route{
+				path:   []string{pathNodes[0]},
+				parent: parent,
+			}
+			r.routes = append(r.routes, newRoute)
+			parent = newRoute
+		}
 	}
-	if changeHandler() {
-		newHandler := Handler{method: method, Handler: handler}
-		newHandler.middelware = append(newHandler.middelware, middleware...)
-		route.handlers = append(route.handlers, newHandler)
+	return r.scan(parent, method, path, handler)
+}
+
+// Add handlers to a route
+func (r *route) add(method string, controller HandlerFunc, middleware ...HandlerFunc) Handler {
+	// If already exist an entry for the method change related handler
+	for _, h := range r.handlers {
+		if h.method == method {
+			h.ctrl = controller
+			return h
+		}
 	}
+	new := handler{method: method, ctrl: controller}
+	r.handlers = append(r.handlers, &new)
+	return &new
 }
 
 // Print the list of routes
-func (r *Router) printRoutes() {
-	var tree func([]*Route) error
-	tree = func(routes []*Route) error {
+func (r *router) printRoutes() {
+	var tree func([]*route) error
+	tree = func(routes []*route) error {
 		for _, route := range routes {
 			for _, handler := range route.handlers {
 				log.Println(
 					handler.method,
 					strings.Join(route.path, "/"),
-					getFuncName(handler.Handler),
-					len(handler.middelware),
+					getFuncName(handler.ctrl),
+					len(handler.after),
+					len(handler.before),
 				)
 			}
 			tree(route.children)
@@ -172,14 +190,4 @@ func getFuncName(f interface{}) string {
 	path := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 	name := strings.Split(path, "/")
 	return name[len(name)-1]
-}
-
-func clean(s []string) []string {
-	var r []string
-	for _, str := range s {
-		if str != "" {
-			r = append(r, str)
-		}
-	}
-	return r
 }

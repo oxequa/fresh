@@ -18,21 +18,24 @@ import (
 type (
 	Fresh interface {
 		Run() error
-		Group(string, ...HandlerFunc) Fresh
+		Get(string, HandlerFunc) Handler
+		Post(string, HandlerFunc) Handler
+		Put(string, HandlerFunc) Handler
+		Trace(string, HandlerFunc) Handler
+		Patch(string, HandlerFunc) Handler
+		Delete(string, HandlerFunc) Handler
+		Options(string, HandlerFunc) Handler
+
+		After(...HandlerFunc) Fresh
+		Before(...HandlerFunc) Fresh
+		Group(string) Fresh
 		Resource(string, ...HandlerFunc) error
-		Get(string, ...HandlerFunc) error
-		Post(string, ...HandlerFunc) error
-		Put(string, ...HandlerFunc) error
-		Trace(string, ...HandlerFunc) error
-		Patch(string, ...HandlerFunc) error
-		Delete(string, ...HandlerFunc) error
-		Options(string, ...HandlerFunc) error
 	}
 
 	fresh struct {
-		group  *Route
+		group  *route
 		config *config
-		router *Router
+		router *router
 		server *http.Server
 	}
 
@@ -49,7 +52,7 @@ func New() Fresh {
 	fresh := fresh{
 		config: new(config),
 		server: new(http.Server),
-		router: new(Router),
+		router: new(router),
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
@@ -82,80 +85,80 @@ func (f *fresh) Run() error {
 	return nil
 }
 
+// Register for GET APIs
+func (f *fresh) Get(path string, handler HandlerFunc) Handler {
+	return f.router.register("GET", path, f.group, handler)
+}
+
+// Register for POST APIs
+func (f *fresh) Post(path string, handler HandlerFunc) Handler {
+	return f.router.register("POST", path, f.group, handler)
+}
+
+// Register for PUT APIs
+func (f *fresh) Put(path string, handler HandlerFunc) Handler {
+	return f.router.register("PUT", path, f.group, handler)
+}
+
+// Register for PATCH APIs
+func (f *fresh) Patch(path string, handler HandlerFunc) Handler {
+	return f.router.register("PATCH", path, f.group, handler)
+}
+
+// Register for DELETE APIs
+func (f *fresh) Delete(path string, handler HandlerFunc) Handler {
+	return f.router.register("DELETE", path, f.group, handler)
+}
+
+// Register for OPTIONS APIs
+func (f *fresh) Options(path string, handler HandlerFunc) Handler {
+	return f.router.register("OPTIONS", path, f.group, handler)
+}
+
+// Register for TRACE APIs
+func (f *fresh) Trace(path string, handler HandlerFunc) Handler {
+	return f.router.register("TRACE", path, f.group, handler)
+}
+
 // Register a group
-func (f fresh) Group(path string, middleware ...HandlerFunc) Fresh {
-	f.group = &Route{}
-	f.group.path = strings.Split(path, "/")
-	f.group.middleware = append(f.group.middleware, middleware...)
+func (f fresh) Group(path string) Fresh {
+	f.group = &route{
+		path: strings.Split(path, "/"),
+	}
 	return &f
 }
 
+// After middleware
+func (f *fresh) After(middleware ...HandlerFunc) Fresh {
+	f.group.after = append(f.group.after, middleware...)
+	return f
+}
+
+// Before middleware
+func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
+	f.group.before = append(f.group.before, middleware...)
+	return f
+}
+
 // Register a resource (get, post, put, delete)
-func (f *fresh) Resource(path string, handlers ...HandlerFunc) (err error) {
+func (f *fresh) Resource(path string, handlers ...HandlerFunc) error {
 	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 	path = strings.Trim(path, "/")
 	name := "{" + path + "}"
-	h := []HandlerFunc{}
 	if strings.LastIndex(path, "/") != -1 {
 		name = string("{" + path[strings.LastIndex(path, "/")+1:] + "}")
 	}
 	for _, method := range methods {
 		switch method {
 		case "GET":
-			h = []HandlerFunc{handlers[0]}
-			h = append(h, handlers[4:]...)
-			err = f.router.register(method, path, f.group, h...)
+			f.router.register(method, path, f.group, handlers[0])
 		case "POST":
-			h = []HandlerFunc{handlers[1]}
-			h = append(h, handlers[4:]...)
-			err = f.router.register(method, path+"/"+name, f.group, h...)
+			f.router.register(method, path+"/"+name, f.group, handlers[1])
 		case "PUT", "PATCH":
-			h = []HandlerFunc{handlers[2]}
-			h = append(h, handlers[4:]...)
-			err = f.router.register(method, path+"/"+name, f.group, h...)
+			f.router.register(method, path+"/"+name, f.group, handlers[2])
 		case "DELETE":
-			h = []HandlerFunc{handlers[3]}
-			h = append(h, handlers[4:]...)
-			err = f.router.register(method, path+"/"+name, f.group, h...)
-		}
-		if err != nil {
-			return err
+			f.router.register(method, path+"/"+name, f.group, handlers[3])
 		}
 	}
 	return nil
-}
-
-// Register for GET APIs
-func (f *fresh) Get(path string, handlers ...HandlerFunc) error {
-	return f.router.register("GET", path, f.group, handlers...)
-}
-
-// Register for POST APIs
-func (f *fresh) Post(path string, handlers ...HandlerFunc) error {
-	return f.router.register("POST", path, f.group, handlers...)
-}
-
-// Register for PUT APIs
-func (f *fresh) Put(path string, handlers ...HandlerFunc) error {
-	return f.router.register("PUT", path, f.group, handlers...)
-}
-
-// Register for PATCH APIs
-func (f *fresh) Patch(path string, handlers ...HandlerFunc) error {
-	return f.router.register("PATCH", path, f.group, handlers...)
-}
-
-// Register for DELETE APIs
-func (f *fresh) Delete(path string, handlers ...HandlerFunc) error {
-	return f.router.register("DELETE", path, f.group, handlers...)
-}
-
-// Register for OPTIONS APIs
-func (f *fresh) Options(path string, handlers ...HandlerFunc) error {
-	return f.router.register("OPTIONS", path, f.group, handlers...)
-}
-
-// Register for TRACE APIs
-func (f *fresh) Trace(path string, handlers ...HandlerFunc) error {
-	return f.router.register("TRACE", path, f.group, handlers...)
 }
