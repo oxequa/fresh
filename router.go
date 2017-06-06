@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Handler structure
+// Handler struct
 type (
 	Handler interface {
 		After(...HandlerFunc) Handler
@@ -22,7 +22,7 @@ type (
 	}
 )
 
-// Route structure
+// Route struct
 type route struct {
 	path     []string
 	handlers []*handler
@@ -33,18 +33,46 @@ type route struct {
 	before   []HandlerFunc
 }
 
-// Router structure
+// Router struct
 type router struct {
 	routes []*route
 }
 
-// After middleware
+// Resource struct
+type (
+	Resource interface {
+		After(...HandlerFunc) Resource
+		Before(...HandlerFunc) Resource
+	}
+	resource struct {
+		methods []string
+		rest    []Handler
+	}
+)
+
+// After middleware for a resource
+func (r *resource) After(middleware ...HandlerFunc) Resource {
+	for _, route := range r.rest {
+		route.After(middleware...)
+	}
+	return r
+}
+
+// Before middleware for a resource
+func (r *resource) Before(middleware ...HandlerFunc) Resource {
+	for _, route := range r.rest {
+		route.Before(middleware...)
+	}
+	return r
+}
+
+// After middleware for a single route
 func (h *handler) After(middleware ...HandlerFunc) Handler {
 	h.after = append(h.after, middleware...)
 	return h
 }
 
-// Before middleware
+// Before middleware for a single route
 func (h *handler) Before(middleware ...HandlerFunc) Handler {
 	h.before = append(h.before, middleware...)
 	return h

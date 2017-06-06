@@ -29,7 +29,7 @@ type (
 		After(...HandlerFunc) Fresh
 		Before(...HandlerFunc) Fresh
 		Group(string) Fresh
-		Resource(string, ...HandlerFunc) error
+		Rest(string, ...HandlerFunc) Resource
 	}
 
 	fresh struct {
@@ -141,24 +141,26 @@ func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 }
 
 // Register a resource (get, post, put, delete)
-func (f *fresh) Resource(path string, handlers ...HandlerFunc) error {
-	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
+func (f *fresh) Rest(path string, handlers ...HandlerFunc) Resource {
+	res := resource{
+		methods: []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+	}
 	path = strings.Trim(path, "/")
 	name := "{" + path + "}"
 	if strings.LastIndex(path, "/") != -1 {
 		name = string("{" + path[strings.LastIndex(path, "/")+1:] + "}")
 	}
-	for _, method := range methods {
+	for _, method := range res.methods {
 		switch method {
 		case "GET":
-			f.router.register(method, path, f.group, handlers[0])
+			res.rest = append(res.rest, f.router.register(method, path, f.group, handlers[0]))
 		case "POST":
-			f.router.register(method, path+"/"+name, f.group, handlers[1])
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, handlers[1]))
 		case "PUT", "PATCH":
-			f.router.register(method, path+"/"+name, f.group, handlers[2])
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, handlers[2]))
 		case "DELETE":
-			f.router.register(method, path+"/"+name, f.group, handlers[3])
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, handlers[3]))
 		}
 	}
-	return nil
+	return &res
 }
