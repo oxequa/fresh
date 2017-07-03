@@ -14,6 +14,29 @@ import (
 	"time"
 )
 
+// MIME types
+const (
+	MIMEAppJSON    = "application/json" + ";" + UTF8
+	MIMEAppJS      = "application/javascript" + ";" + UTF8
+	MIMEAppXML     = "application/xml" + ";" + UTF8
+	MIMEUrlencoded = "application/x-www-form-urlencoded"
+	MIMEMultipart  = "multipart/form-data"
+	MIMETextHTML   = "text/html" + ";" + UTF8
+	MIMETextXML    = "text/xml" + ";" + UTF8
+	MIMEText       = "text/plain" + ";" + UTF8
+)
+
+// Encoding Chartset
+const (
+	UTF8     = "charset=UTF-8"
+	ISO88591 = "chartset=ISO-8859-1"
+)
+
+// Response types
+const (
+	ContentType = "Content-Type"
+)
+
 // Main Fresh structure
 type (
 	Fresh interface {
@@ -39,12 +62,17 @@ type (
 		server *http.Server
 	}
 
-	Context struct {
-		Request  Request
-		Response Response
+	Context interface {
+		Request() Request
+		Response() Response
 	}
 
-	HandlerFunc func(*Context) error
+	context struct {
+		request  Request
+		response Response
+	}
+
+	HandlerFunc func(Context) error
 )
 
 // Initialize main Fresh structure
@@ -163,4 +191,14 @@ func (f *fresh) Rest(path string, handlers ...HandlerFunc) Resource {
 		}
 	}
 	return &res
+}
+
+// Return context response
+func (c *context) Response() Response {
+	return c.response
+}
+
+// Return context request
+func (c *context) Request() Request {
+	return c.request
 }

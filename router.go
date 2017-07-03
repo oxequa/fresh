@@ -78,6 +78,18 @@ func (h *handler) Before(middleware ...HandlerFunc) Handler {
 	return h
 }
 
+// Run a middleware
+func (h *handler) middleware(c Context, handlers ...HandlerFunc) error {
+	for _, f := range handlers {
+		if f != nil {
+			if err := f(c); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var tree func([]*route) (bool, error)
@@ -86,12 +98,26 @@ func (r *router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
 				for _, handler := range route.handlers {
 					if handler.method == request.Method {
-						return true, handler.ctrl(&Context{
-							Request:  NewRequest(request),
-							Response: NewResponse(writer),
-						})
+						context := context{
+							request:  newRequest(request),
+							response: newResponse(writer),
+						}
+						// before middleware
+						if err := handler.middleware(&context, handler.before...); err != nil {
+							return true, err
+						}
+						reply := handler.ctrl(&context)
+						if reply != nil {
+							return true, reply
+						}
+						// after middleware
+						if err := handler.middleware(&context, handler.after...); err != nil {
+							return true, err
+						}
+						// write response
+						context.response.write()
+						return true, nil
 					}
-
 				}
 			}
 			return tree(route.children)
@@ -99,7 +125,9 @@ func (r *router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		return false, nil
 	}
 	if found, err := tree(r.routes); found && err != nil {
+		// Handle internal server error
 		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Write([]byte(err.Error()))
 	} else if !found {
 		writer.WriteHeader(http.StatusNotFound)
 	}
@@ -202,8 +230,8 @@ func (r *router) printRoutes() {
 					handler.method,
 					strings.Join(route.path, "/"),
 					getFuncName(handler.ctrl),
-					len(handler.after),
 					len(handler.before),
+					len(handler.after),
 				)
 			}
 			tree(route.children)

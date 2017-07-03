@@ -25,7 +25,7 @@ type (
 )
 
 // Request constructor
-func NewRequest(r *http.Request) Request {
+func newRequest(r *http.Request) Request {
 	return &request{httpRequest: r}
 }
 
