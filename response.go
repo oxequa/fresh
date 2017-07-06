@@ -170,3 +170,11 @@ func (r *response) HTML(c int, i string) error {
 // Download response
 
 // Redirect
+func (r *response) Redirect(c int, link string) error {
+	if c < http.StatusMultipleChoices || c > http.StatusTemporaryRedirect {
+		return nil
+	}
+	r.w.Header().Set(Location, link)
+	r.w.WriteHeader(c)
+	return nil
+}

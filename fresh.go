@@ -32,9 +32,18 @@ const (
 	ISO88591 = "chartset=ISO-8859-1"
 )
 
-// Response types
+// Header types
 const (
-	ContentType = "Content-Type"
+	Location                      = "Location"
+	ContentType                   = "Content-Type"
+	AccessControlMaxAge           = "Access-Control-Max-Age"
+	AccessControlAllowOrigin      = "Access-Control-Allow-Origin"
+	AccessControlAllowMethods     = "Access-Control-Allow-Methods"
+	AccessControlAllowHeaders     = "Access-Control-Allow-Headers"
+	AccessControlRequestMethod    = "Access-Control-Request-Method"
+	AccessControlExposeHeaders    = "Access-Control-Expose-Headers"
+	AccessControlRequestHeaders   = "Access-Control-Request-Headers"
+	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
 )
 
 // Main Fresh structure
@@ -113,39 +122,14 @@ func (f *fresh) Run() error {
 	return nil
 }
 
-// Register for GET APIs
-func (f *fresh) Get(path string, handler HandlerFunc) Handler {
-	return f.router.register("GET", path, f.group, handler)
+// Return context request
+func (c *context) Request() Request {
+	return c.request
 }
 
-// Register for POST APIs
-func (f *fresh) Post(path string, handler HandlerFunc) Handler {
-	return f.router.register("POST", path, f.group, handler)
-}
-
-// Register for PUT APIs
-func (f *fresh) Put(path string, handler HandlerFunc) Handler {
-	return f.router.register("PUT", path, f.group, handler)
-}
-
-// Register for PATCH APIs
-func (f *fresh) Patch(path string, handler HandlerFunc) Handler {
-	return f.router.register("PATCH", path, f.group, handler)
-}
-
-// Register for DELETE APIs
-func (f *fresh) Delete(path string, handler HandlerFunc) Handler {
-	return f.router.register("DELETE", path, f.group, handler)
-}
-
-// Register for OPTIONS APIs
-func (f *fresh) Options(path string, handler HandlerFunc) Handler {
-	return f.router.register("OPTIONS", path, f.group, handler)
-}
-
-// Register for TRACE APIs
-func (f *fresh) Trace(path string, handler HandlerFunc) Handler {
-	return f.router.register("TRACE", path, f.group, handler)
+// Return context response
+func (c *context) Response() Response {
+	return c.response
 }
 
 // Register a group
@@ -166,6 +150,41 @@ func (f *fresh) After(middleware ...HandlerFunc) Fresh {
 func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 	f.group.before = append(f.group.before, middleware...)
 	return f
+}
+
+// Register for GET APIs
+func (f *fresh) Get(path string, handler HandlerFunc) Handler {
+	return f.router.register("GET", path, f.group, handler)
+}
+
+// Register for PUT APIs
+func (f *fresh) Put(path string, handler HandlerFunc) Handler {
+	return f.router.register("PUT", path, f.group, handler)
+}
+
+// Register for POST APIs
+func (f *fresh) Post(path string, handler HandlerFunc) Handler {
+	return f.router.register("POST", path, f.group, handler)
+}
+
+// Register for TRACE APIs
+func (f *fresh) Trace(path string, handler HandlerFunc) Handler {
+	return f.router.register("TRACE", path, f.group, handler)
+}
+
+// Register for PATCH APIs
+func (f *fresh) Patch(path string, handler HandlerFunc) Handler {
+	return f.router.register("PATCH", path, f.group, handler)
+}
+
+// Register for DELETE APIs
+func (f *fresh) Delete(path string, handler HandlerFunc) Handler {
+	return f.router.register("DELETE", path, f.group, handler)
+}
+
+// Register for OPTIONS APIs
+func (f *fresh) Options(path string, handler HandlerFunc) Handler {
+	return f.router.register("OPTIONS", path, f.group, handler)
 }
 
 // Register a resource (get, post, put, delete)
@@ -191,14 +210,4 @@ func (f *fresh) Rest(path string, handlers ...HandlerFunc) Resource {
 		}
 	}
 	return &res
-}
-
-// Return context response
-func (c *context) Response() Response {
-	return c.response
-}
-
-// Return context request
-func (c *context) Request() Request {
-	return c.request
 }
