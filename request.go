@@ -20,38 +20,34 @@ type (
 	}
 
 	request struct {
-		httpRequest *http.Request
+		*context
+		r *http.Request
 	}
 )
 
-// Request constructor
-func newRequest(r *http.Request) Request {
-	return &request{httpRequest: r}
-}
-
 // Get the query string
 func (req *request) QueryString() string {
-	return req.httpRequest.URL.RawQuery
+	return req.r.URL.RawQuery
 }
 
 // Get a query string parameter
 func (req *request) QueryParam(k string) string {
-	return req.httpRequest.URL.Query().Get(k)
+	return req.r.URL.Query().Get(k)
 }
 
 // Get a URL parameter
 func (req *request) URLParam(k string) string {
-	return req.httpRequest.URL.Query().Get(k)
+	return req.r.URL.Query().Get(k)
 }
 
 // Get the body from a application/json request
 func (req *request) Body() io.ReadCloser {
-	return req.httpRequest.Body
+	return req.r.Body
 }
 
 // Get the body mapped to an interface from a application/json request
 func (req *request) Map(i interface{}) {
-	err := json.NewDecoder(req.httpRequest.Body).Decode(i)
+	err := json.NewDecoder(req.r.Body).Decode(i)
 	if err != nil {
 		return
 	}
@@ -60,10 +56,10 @@ func (req *request) Map(i interface{}) {
 
 // Get the form from a application/x-www-form-urlencoded request
 func (req *request) Form() url.Values {
-	return req.httpRequest.Form
+	return req.r.Form
 }
 
 // Get the form value by a given key from a application/x-www-form-urlencoded request
 func (req *request) FormValue(k string) string {
-	return req.httpRequest.FormValue(k)
+	return req.r.FormValue(k)
 }

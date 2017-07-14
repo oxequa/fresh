@@ -122,6 +122,12 @@ func (f *fresh) Run() error {
 	return nil
 }
 
+// Set context request and response
+func (c *context) new(r *http.Request, w http.ResponseWriter) {
+	c.response = &response{w: w, r: r}
+	c.request = &request{r: r}
+}
+
 // Return context request
 func (c *context) Request() Request {
 	return c.request

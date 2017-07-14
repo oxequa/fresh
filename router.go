@@ -91,17 +91,16 @@ func (h *handler) middleware(c Context, handlers ...HandlerFunc) error {
 }
 
 // Router main function. Find the matching route and call registered handlers.
-func (r *router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	var tree func([]*route) (bool, error)
 	tree = func(routes []*route) (bool, error) {
 		for _, route := range routes {
 			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
 				for _, handler := range route.handlers {
 					if handler.method == request.Method {
-						context := context{
-							request:  newRequest(request),
-							response: newResponse(writer),
-						}
+						context := context{}
+						context.new(request, response)
+
 						// before middleware
 						if err := handler.middleware(&context, handler.before...); err != nil {
 							return true, err
@@ -126,10 +125,10 @@ func (r *router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	}
 	if found, err := tree(r.routes); found && err != nil {
 		// Handle internal server error
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte(err.Error()))
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(err.Error()))
 	} else if !found {
-		writer.WriteHeader(http.StatusNotFound)
+		response.WriteHeader(http.StatusNotFound)
 	}
 
 }
