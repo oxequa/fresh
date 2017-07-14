@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 type (
@@ -12,6 +13,8 @@ type (
 		write()
 		Code(int) error
 		Raw(int, string) error
+		File(int, string) error
+		Download(int, string) error
 		Text(int, interface{}) error
 		HTML(int, string) error
 		XML(int, interface{}) error
@@ -23,17 +26,14 @@ type (
 	}
 
 	response struct {
+		*context
 		w        http.ResponseWriter
+		r        *http.Request
 		err      error
 		code     int
 		response []byte
 	}
 )
-
-// Response constructor
-func newResponse(writer http.ResponseWriter) Response {
-	return &response{w: writer}
-}
 
 // Check content type
 func (r *response) check(content string) {
@@ -51,9 +51,10 @@ func (r *response) write() {
 }
 
 // Set response values
-func (r *response) set(code int, response []byte) {
+func (r *response) set(code int, response []byte, err error) {
 	r.response = response
 	r.code = code
+	r.err = err
 }
 
 // Custom Header
@@ -67,22 +68,22 @@ func (r *response) Text(c int, i interface{}) error {
 	r.check(MIMEText)
 	d, err := xml.Marshal(i)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, d)
+	r.set(c, d, nil)
 	return nil
 }
 
 // Http code response
 func (r *response) Code(c int) error {
-	r.set(c, []byte{})
+	r.set(c, nil, nil)
 	return nil
 }
 
 // Raw response
 func (r *response) Raw(c int, i string) error {
-	r.set(c, []byte(i))
+	r.set(c, []byte(i), nil)
 	return nil
 }
 
@@ -91,10 +92,10 @@ func (r *response) JSON(c int, i interface{}) error {
 	r.check(MIMEAppJSON)
 	d, err := json.Marshal(i)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, d)
+	r.set(c, d, nil)
 	return nil
 }
 
@@ -103,10 +104,10 @@ func (r *response) JSONFormat(c int, i interface{}, indent string) error {
 	r.check(MIMEAppJSON)
 	d, err := json.MarshalIndent(i, "", indent)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, d)
+	r.set(c, d, nil)
 	return nil
 }
 
@@ -115,10 +116,10 @@ func (r *response) JSONP(c int, callback string, i interface{}) error {
 	r.check(MIMEAppJS)
 	d, err := json.Marshal(i)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, []byte(fmt.Sprintf("%s(%s)", callback, d)))
+	r.set(c, []byte(fmt.Sprintf("%s(%s)", callback, d)), nil)
 	return nil
 }
 
@@ -127,10 +128,10 @@ func (r *response) JSONPFormat(c int, callback string, i interface{}, indent str
 	r.check(MIMEAppJS)
 	d, err := json.MarshalIndent(i, "", indent)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, []byte(fmt.Sprintf("%s(%s)", callback, d)))
+	r.set(c, []byte(fmt.Sprintf("%s(%s)", callback, d)), nil)
 	return nil
 }
 
@@ -139,10 +140,10 @@ func (r *response) XML(c int, i interface{}) error {
 	r.check(MIMEAppXML)
 	d, err := xml.Marshal(i)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, d)
+	r.set(c, d, nil)
 	return nil
 }
 
@@ -151,23 +152,56 @@ func (r *response) XMLFormat(c int, i interface{}, indent string) error {
 	r.check(MIMEAppXML)
 	d, err := xml.MarshalIndent(i, "", indent)
 	if err != nil {
-		r.set(c, []byte(err.Error()))
+		r.set(c, nil, err)
 		return err
 	}
-	r.set(c, d)
+	r.set(c, d, nil)
 	return nil
 }
 
 // HTML response
 func (r *response) HTML(c int, i string) error {
 	r.check(MIMETextHTML)
-	r.set(c, []byte(i))
+	r.set(c, []byte(i), nil)
 	return nil
 }
 
-// File response
+// File response, may be used to display a file
+func (r *response) File(c int, path string) error {
+	// check if exist
+	if _, err := os.Stat(path); err != nil {
+		r.set(http.StatusNotFound, nil, err)
+		return nil
+	}
+	// check if is a dir or not
+	fi, err := os.Stat(path)
+	if err != nil || fi.IsDir() {
+		r.set(http.StatusNotFound, nil, err)
+		return nil
+	}
+	http.ServeFile(r.w, r.r, path)
+	return nil
+}
 
-// Download response
+// Download response, force the browser to download a file
+func (r *response) Download(c int, path string) error {
+	// check if exist
+	if _, err := os.Stat(path); err != nil {
+		r.set(http.StatusNotFound, nil, err)
+		return nil
+	}
+	// check if is a dir or not
+	fi, err := os.Stat(path)
+	if err != nil || fi.IsDir() {
+		r.set(http.StatusNotFound, nil, err)
+		return nil
+	}
+	f, _ := os.Open(path)
+	r.w.Header().Set("Content-Disposition", "attachment; filename="+fi.Name())
+	http.ServeContent(r.w, r.r, fi.Name(), fi.ModTime(), f)
+	f.Close()
+	return nil
+}
 
 // Redirect
 func (r *response) Redirect(c int, link string) error {
