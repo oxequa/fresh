@@ -179,7 +179,9 @@ func (r *response) File(c int, path string) error {
 		r.set(http.StatusNotFound, nil, err)
 		return nil
 	}
-	http.ServeFile(r.w, r.r, path)
+	f, _ := os.Open(path)
+	http.ServeContent(r.w, r.r, fi.Name(), fi.ModTime(), f)
+	f.Close()
 	return nil
 }
 
