@@ -50,6 +50,7 @@ const (
 type (
 	Fresh interface {
 		Run() error
+		Config() Config
 		Get(string, HandlerFunc) Handler
 		Post(string, HandlerFunc) Handler
 		Put(string, HandlerFunc) Handler
@@ -93,7 +94,7 @@ func New() Fresh {
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
-		// random ip and port
+		// random port
 		rand.Seed(time.Now().Unix())
 		fresh.config.Host = "localhost"
 		fresh.config.Port = rand.Intn(9999-1111) + 1111
@@ -104,13 +105,15 @@ func New() Fresh {
 // Load all servers configurations and start them
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
+	port := strconv.Itoa(f.config.Port)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	listener, err := net.Listen("tcp", f.config.Host+":"+strconv.Itoa(f.config.Port))
+	listener, err := net.Listen("tcp", f.config.Host+":"+port)
 	if err != nil {
+		log.Fatal(err)
 		return err
 	}
 	go func() {
-		log.Println("Server started on ", f.config.Host, ":", f.config.Port)
+		log.Println("Server started on", f.config.Host+":"+port)
 		f.server.Handler = f.router
 		f.router.printRoutes()
 		f.server.Serve(listener)
@@ -122,20 +125,9 @@ func (f *fresh) Run() error {
 	return nil
 }
 
-// Set context request and response
-func (c *context) new(r *http.Request, w http.ResponseWriter) {
-	c.response = &response{w: w, r: r}
-	c.request = &request{r: r}
-}
-
-// Return context request
-func (c *context) Request() Request {
-	return c.request
-}
-
-// Return context response
-func (c *context) Response() Response {
-	return c.response
+// Config server options
+func (f *fresh) Config() Config {
+	return f.config
 }
 
 // Register a group
@@ -216,4 +208,20 @@ func (f *fresh) Rest(path string, handlers ...HandlerFunc) Resource {
 		}
 	}
 	return &res
+}
+
+// Set context request and response
+func (c *context) new(r *http.Request, w http.ResponseWriter) {
+	c.response = &response{w: w, r: r}
+	c.request = &request{r: r}
+}
+
+// Return context request
+func (c *context) Request() Request {
+	return c.request
+}
+
+// Return context response
+func (c *context) Response() Response {
+	return c.response
 }
