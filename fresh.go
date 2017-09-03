@@ -102,26 +102,39 @@ func New() Fresh {
 	return &fresh
 }
 
-// Load all servers configurations and start them
+// Start HTTP server
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
 	port := strconv.Itoa(f.config.Port)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
 	listener, err := net.Listen("tcp", f.config.Host+":"+port)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
+
 	go func() {
 		log.Println("Server started on", f.config.Host+":"+port)
 		f.server.Handler = f.router
 		f.router.printRoutes()
+		// check for tsl before serve
 		f.server.Serve(listener)
 	}()
 	<-shutdown
 	log.Println("Server shutting down")
 	ctx, _ := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
+	return nil
+}
+
+// Start TSL server
+func (f *fresh) RunTSL() error{
+	return nil
+}
+
+// Start TSL server with letsencrypt certificate
+func (f *fresh) RunAutoTSL() error{
 	return nil
 }
 

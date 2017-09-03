@@ -22,12 +22,14 @@ type (
 	config struct {
 		Port    int    `json:"port,omitempty"` // srv port
 		Host    string `json:"host,omitempty"` // srv host
-		TSL     bool   `json:"tsl,omitempty"`  // tsl status
-		TSLcert string
-		TSLkey  string
+		TSL     *tsl   `json:"tsl,omitempty"`  // tsl status
 		Request *request `json:"request,omitempty"` // request config
 		Gzip    *gzip    `json:"gzip,omitempty"`    // gzip config
 		CORS    *cors    `json:"cors,omitempty"`    // cors options
+	}
+
+	tsl struct {
+
 	}
 
 	limits struct {
@@ -85,9 +87,9 @@ func (c *config) SetHost(host string) Config {
 }
 
 func (c *config) SetTSL(cert, key string) Config {
-	c.TSL = true
-	c.Port = 443
-	c.TSLcert = cert
-	c.TSLkey = key
+	return c
+}
+
+func (c *config) AutoTSL(cert, key string) Config {
 	return c
 }
