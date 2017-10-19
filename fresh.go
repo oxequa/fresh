@@ -131,7 +131,7 @@ func (f *fresh) Run() error {
 
 // Config interface
 func (f *fresh) Config() Config{
-	return f.Config()
+	return f.config
 }
 
 // Group registration
