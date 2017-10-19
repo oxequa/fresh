@@ -2,8 +2,6 @@ package fresh
 
 import (
 	httpContext "context"
-	"crypto/tls"
-	"golang.org/x/crypto/acme/autocert"
 	"log"
 	"math/rand"
 	"net"
