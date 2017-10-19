@@ -2,6 +2,8 @@ package fresh
 
 import (
 	httpContext "context"
+	"crypto/tls"
+	"golang.org/x/crypto/acme/autocert"
 	"log"
 	"math/rand"
 	"net"
@@ -115,26 +117,30 @@ func (f *fresh) Run() error {
 	}
 
 	go func() {
-		log.Println("Server started on", f.config.Host+":"+port)
+		log.Println("Server listen on", f.config.Host+":"+port)
 		f.server.Handler = f.router
 		f.router.printRoutes()
 		// check for tsl before serve
 		f.server.Serve(listener)
 	}()
 	<-shutdown
-	log.Println("Server shutting down")
+	log.Println("Server shutdown")
 	ctx, _ := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
 	return nil
 }
 
-// Start TSL server
-func (f *fresh) RunTSL() error{
-	return nil
-}
-
 // Start TSL server with letsencrypt certificate
-func (f *fresh) RunAutoTSL() error{
+func (f *fresh) RunTSL() error {
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(f.config.Host),
+		Cache:      autocert.DirCache(".certs"), //folder for storing certificates
+	}
+	f.server.TLSConfig = &tls.Config{
+		GetCertificate: certManager.GetCertificate,
+	}
+	// serve tsl func
 	return nil
 }
 

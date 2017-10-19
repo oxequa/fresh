@@ -1,6 +1,7 @@
 package fresh
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -16,20 +17,15 @@ type (
 	Config interface {
 		SetPort(int) Config
 		SetHost(string) Config
-		SetTSL(string, string) Config
 	}
 
 	config struct {
-		Port    int    `json:"port,omitempty"` // srv port
-		Host    string `json:"host,omitempty"` // srv host
-		TSL     *tsl   `json:"tsl,omitempty"`  // tsl status
-		Request *request `json:"request,omitempty"` // request config
-		Gzip    *gzip    `json:"gzip,omitempty"`    // gzip config
-		CORS    *cors    `json:"cors,omitempty"`    // cors options
-	}
-
-	tsl struct {
-
+		Port    int         `json:"port,omitempty"`    // srv port
+		Host    string      `json:"host,omitempty"`    // srv host
+		TSL     *tls.Config `json:"tsl,omitempty"`     // tsl status
+		Request *request    `json:"request,omitempty"` // request config
+		Gzip    *gzip       `json:"gzip,omitempty"`    // gzip config
+		CORS    *cors       `json:"cors,omitempty"`    // cors options
 	}
 
 	limits struct {
@@ -83,13 +79,5 @@ func (c *config) SetPort(port int) Config {
 func (c *config) SetHost(host string) Config {
 	// check if available
 	c.Host = host
-	return c
-}
-
-func (c *config) SetTSL(cert, key string) Config {
-	return c
-}
-
-func (c *config) AutoTSL(cert, key string) Config {
 	return c
 }
