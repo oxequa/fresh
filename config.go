@@ -18,7 +18,9 @@ type (
 	Config interface {
 		SetTSL() Config
 		SetPort(int) Config
+		SetDebug(bool) Config
 		SetHost(string) Config
+		SetLogger(bool) Config
 		SetCertTSL(string, string) Config
 	}
 
@@ -26,6 +28,8 @@ type (
 		*fresh
 		Port    int         `json:"port,omitempty"`    // srv port
 		Host    string      `json:"host,omitempty"`    // srv host
+		Debug   bool		`json:"debug,omitempty"`   // debug status
+		Logger  bool		`json:"logger,omitempty"`  // logger status
 		TSL     *tls.Config `json:"tsl,omitempty"`     // tsl status
 		Request *request    `json:"request,omitempty"` // request config
 		Gzip    *gzip       `json:"gzip,omitempty"`    // gzip config
@@ -95,6 +99,16 @@ func (c *config) SetPort(port int) Config {
 func (c *config) SetHost(host string) Config {
 	// check if available
 	c.Host = host
+	return c
+}
+
+func (c *config) SetDebug(status bool) Config{
+	c.Debug = status
+	return c
+}
+
+func (c *config) SetLogger(status bool) Config{
+	c.Logger = status
 	return c
 }
 
