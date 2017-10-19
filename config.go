@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -15,11 +16,14 @@ const (
 
 type (
 	Config interface {
+		SetTSL() Config
 		SetPort(int) Config
 		SetHost(string) Config
+		SetCertTSL(string, string) Config
 	}
 
 	config struct {
+		*fresh
 		Port    int         `json:"port,omitempty"`    // srv port
 		Host    string      `json:"host,omitempty"`    // srv host
 		TSL     *tls.Config `json:"tsl,omitempty"`     // tsl status
@@ -70,6 +74,18 @@ func (c *config) write(path string) error {
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
 }
 
+func (c *config) SetTSL() Config{
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(c.Host),
+		Cache:      autocert.DirCache(".certs"), //folder for storing certificates
+	}
+	c.server.TLSConfig = &tls.Config{
+		GetCertificate: certManager.GetCertificate,
+	}
+	return c
+}
+
 func (c *config) SetPort(port int) Config {
 	// check if available
 	c.Port = port
@@ -79,5 +95,9 @@ func (c *config) SetPort(port int) Config {
 func (c *config) SetHost(host string) Config {
 	// check if available
 	c.Host = host
+	return c
+}
+
+func (c *config) SetCertTSL(certFile, keyFile string) Config{
 	return c
 }

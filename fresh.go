@@ -53,18 +53,19 @@ type (
 	Fresh interface {
 		Run() error
 		Config() Config
-		Get(string, HandlerFunc) Handler
-		Post(string, HandlerFunc) Handler
-		Put(string, HandlerFunc) Handler
-		Trace(string, HandlerFunc) Handler
-		Patch(string, HandlerFunc) Handler
-		Delete(string, HandlerFunc) Handler
-		Options(string, HandlerFunc) Handler
 
+		Group(string) Fresh
 		After(...HandlerFunc) Fresh
 		Before(...HandlerFunc) Fresh
-		Group(string) Fresh
 		Rest(string, ...HandlerFunc) Resource
+
+		GET(string, HandlerFunc) Handler
+		POST(string, HandlerFunc) Handler
+		PUT(string, HandlerFunc) Handler
+		TRACE(string, HandlerFunc) Handler
+		PATCH(string, HandlerFunc) Handler
+		DELETE(string, HandlerFunc) Handler
+		OPTIONS(string, HandlerFunc) Handler
 	}
 
 	fresh struct {
@@ -104,7 +105,7 @@ func New() Fresh {
 	return &fresh
 }
 
-// Start HTTP server
+// Run HTTP server
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
 	port := strconv.Itoa(f.config.Port)
@@ -130,26 +131,12 @@ func (f *fresh) Run() error {
 	return nil
 }
 
-// Start TSL server with letsencrypt certificate
-func (f *fresh) RunTSL() error {
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(f.config.Host),
-		Cache:      autocert.DirCache(".certs"), //folder for storing certificates
-	}
-	f.server.TLSConfig = &tls.Config{
-		GetCertificate: certManager.GetCertificate,
-	}
-	// serve tsl func
-	return nil
+// Config interface
+func (f *fresh) Config() Config{
+	return f.Config()
 }
 
-// Config server options
-func (f *fresh) Config() Config {
-	return f.config
-}
-
-// Register a group
+// Group registration
 func (f fresh) Group(path string) Fresh {
 	f.group = &route{
 		path: strings.Split(path, "/"),
@@ -169,43 +156,8 @@ func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 	return f
 }
 
-// Register for GET APIs
-func (f *fresh) Get(path string, handler HandlerFunc) Handler {
-	return f.router.register("GET", path, f.group, handler)
-}
-
-// Register for PUT APIs
-func (f *fresh) Put(path string, handler HandlerFunc) Handler {
-	return f.router.register("PUT", path, f.group, handler)
-}
-
-// Register for POST APIs
-func (f *fresh) Post(path string, handler HandlerFunc) Handler {
-	return f.router.register("POST", path, f.group, handler)
-}
-
-// Register for TRACE APIs
-func (f *fresh) Trace(path string, handler HandlerFunc) Handler {
-	return f.router.register("TRACE", path, f.group, handler)
-}
-
-// Register for PATCH APIs
-func (f *fresh) Patch(path string, handler HandlerFunc) Handler {
-	return f.router.register("PATCH", path, f.group, handler)
-}
-
-// Register for DELETE APIs
-func (f *fresh) Delete(path string, handler HandlerFunc) Handler {
-	return f.router.register("DELETE", path, f.group, handler)
-}
-
-// Register for OPTIONS APIs
-func (f *fresh) Options(path string, handler HandlerFunc) Handler {
-	return f.router.register("OPTIONS", path, f.group, handler)
-}
-
 // Register a resource (get, post, put, delete)
-func (f *fresh) Rest(path string, handlers ...HandlerFunc) Resource {
+func (f *fresh) Rest(path string, h ...HandlerFunc) Resource {
 	res := resource{
 		methods: []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 	}
@@ -217,16 +169,51 @@ func (f *fresh) Rest(path string, handlers ...HandlerFunc) Resource {
 	for _, method := range res.methods {
 		switch method {
 		case "GET":
-			res.rest = append(res.rest, f.router.register(method, path, f.group, handlers[0]))
+			res.rest = append(res.rest, f.router.register(method, path, f.group, h[0]))
 		case "POST":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, handlers[1]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, h[1]))
 		case "PUT", "PATCH":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, handlers[2]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, h[2]))
 		case "DELETE":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, handlers[3]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, h[3]))
 		}
 	}
 	return &res
+}
+
+// GET api registration
+func (f *fresh) GET(path string, handler HandlerFunc) Handler {
+	return f.router.register("GET", path, f.group, handler)
+}
+
+// PUT api registration
+func (f *fresh) PUT(path string, handler HandlerFunc) Handler {
+	return f.router.register("PUT", path, f.group, handler)
+}
+
+// POST api registration
+func (f *fresh) POST(path string, handler HandlerFunc) Handler {
+	return f.router.register("POST", path, f.group, handler)
+}
+
+// TRACE api registration
+func (f *fresh) TRACE(path string, handler HandlerFunc) Handler {
+	return f.router.register("TRACE", path, f.group, handler)
+}
+
+// PATCH api registration
+func (f *fresh) PATCH(path string, handler HandlerFunc) Handler {
+	return f.router.register("PATCH", path, f.group, handler)
+}
+
+// DELETE api registration
+func (f *fresh) DELETE(path string, handler HandlerFunc) Handler {
+	return f.router.register("DELETE", path, f.group, handler)
+}
+
+// OPTIONS api registration
+func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
+	return f.router.register("OPTIONS", path, f.group, handler)
 }
 
 // Set context request and response
