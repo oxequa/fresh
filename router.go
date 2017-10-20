@@ -107,15 +107,18 @@ func (r *route) add(method string, controller HandlerFunc, middleware ...Handler
 // Scan the routes tree
 func (r *router) scan(parent *route, method string, path string, handler HandlerFunc) Handler {
 	pathNodes := []string{}
+	pathNodes = strings.Split(path, "/")
+	for index, str := range pathNodes {
+		if len(str) == 0 {
+			 pathNodes = append(pathNodes[:index], pathNodes[index + 1:]...)
+		}
+	}
 	if parent != nil {
-		pathNodes = strings.Split(path, "/")
 		if len(pathNodes) == len(parent.path) {
 			pathNodes = []string{}
 		} else {
 			pathNodes = pathNodes[len(parent.path):]
 		}
-	} else {
-		pathNodes = strings.Split(path, "/")
 	}
 	if len(pathNodes) == 0 {
 		// handlers and middleware association
@@ -209,6 +212,7 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	var tree func([]*route) (bool, error)
 	tree = func(routes []*route) (bool, error) {
 		for _, route := range routes {
+			log.Println(route.path)
 			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
 				for _, handler := range route.handlers {
 					if handler.method == request.Method {
@@ -233,7 +237,8 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 					}
 				}
 			}
-			return tree(route.children)
+
+			tree(route.children)
 		}
 		return false, nil
 	}
