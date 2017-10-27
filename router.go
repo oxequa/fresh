@@ -209,40 +209,49 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	var tree func([]*route) (bool, error)
-	tree = func(routes []*route) (bool, error) {
+	var tree func([]*route, int) (bool, error)
+	tree = func(routes []*route, index int) (bool, error) {
 		for _, route := range routes {
-			log.Println(route.path)
-			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
-				for _, handler := range route.handlers {
-					if handler.method == request.Method {
-						context := context{}
-						context.new(request, response)
+			if route.path[len(route.path) - 1] == strings.Split(strings.Trim(request.RequestURI, "/"), "/")[index] {
+				if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
+					for _, handler := range route.handlers {
+						if handler.method == request.Method {
+							context := context{}
+							context.new(request, response)
 
-						// before middleware
-						if err := handler.middleware(&context, handler.before...); err != nil {
-							return true, err
+							// before middleware
+							if err := handler.middleware(&context, handler.before...); err != nil {
+								return true, err
+							}
+							reply := handler.ctrl(&context)
+							if reply != nil {
+								return true, reply
+							}
+							// after middleware
+							if err := handler.middleware(&context, handler.after...); err != nil {
+								return true, err
+							}
+							// write response
+							context.response.write()
+							return true, nil
 						}
-						reply := handler.ctrl(&context)
-						if reply != nil {
-							return true, reply
-						}
-						// after middleware
-						if err := handler.middleware(&context, handler.after...); err != nil {
-							return true, err
-						}
-						// write response
-						context.response.write()
-						return true, nil
 					}
 				}
+				tree(route.children, index+1)
 			}
-
-			tree(route.children)
+		}
+		// Get path parameters
+		if index == len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1{
+			parameterName := routes[len(routes) - 1].path[len(routes[len(routes) - 1].path) - 1]
+			if strings.HasPrefix(parameterName, "{") &&
+				strings.HasSuffix(parameterName, "}"){
+				log.Println(parameterName[1:len(parameterName) - 1])
+				log.Println(strings.Split(strings.Trim(request.RequestURI, "/"), "/")[len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1])
+			}
 		}
 		return false, nil
 	}
-	if found, err := tree(r.routes); found && err != nil {
+	if found, err := tree(r.routes, 0); found && err != nil {
 		// Handle internal server error
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(err.Error()))

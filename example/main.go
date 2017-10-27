@@ -15,6 +15,7 @@ func main() {
 	g := f.Group("/todos/").Before(filter).After(filter)
 	g.GET("/", list)
 	f.GET("pippo", list)
+	f.GET("pippo/pluto", list)
 	g.GET("/{id}", single)
 	f.Run()
 }
