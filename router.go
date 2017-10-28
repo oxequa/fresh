@@ -24,18 +24,18 @@ type (
 
 // Route struct
 type route struct {
-	path     []string
-	handlers []*handler
-	params   []string
-	parent   *route
-	children []*route
-	after    []HandlerFunc
-	before   []HandlerFunc
+	path     	[]string
+	handlers 	[]*handler
+	parent   	 *route
+	children 	[]*route
+	after    	[]HandlerFunc
+	before   	[]HandlerFunc
 }
 
 // Router struct
 type router struct {
 	routes []*route
+	parameters  map[string] string
 }
 
 // Resource struct
@@ -107,8 +107,13 @@ func (r *route) add(method string, controller HandlerFunc, middleware ...Handler
 // Scan the routes tree
 func (r *router) scan(parent *route, method string, path string, handler HandlerFunc) Handler {
 	pathNodes := []string{}
-	pathNodes = strings.Split(path, "/")
+	pathNodes = strings.Split(strings.Trim(path, "/"), "/")
+
+	if len(pathNodes) == 1 && pathNodes[0] ==  ""{
+		return nil
+	}
 	for index, str := range pathNodes {
+
 		if len(str) == 0 {
 			 pathNodes = append(pathNodes[:index], pathNodes[index + 1:]...)
 		}
@@ -125,10 +130,16 @@ func (r *router) scan(parent *route, method string, path string, handler Handler
 		return parent.add(method, handler)
 	}
 
+	// TODO: refactor
 	found := false
 	if parent != nil {
-		for _, route := range parent.children {
+		for i, route := range parent.children {
 			if route.path[len(route.path)-1] == pathNodes[0] {
+				parent = route
+				found = true
+				break
+			}
+			if i == len(parent.children) - 1 && isURLParameter(pathNodes[0]) && isURLParameter(parent.children[i].path[len(parent.children[i].path) -1]){
 				parent = route
 				found = true
 				break
@@ -139,12 +150,26 @@ func (r *router) scan(parent *route, method string, path string, handler Handler
 				path:   append(parent.path, pathNodes[0]),
 				parent: parent,
 			}
-			parent.children = append(parent.children, newRoute)
+			if isURLParameter(pathNodes[0]) == false && len(parent.children) > 0 && isURLParameter(parent.children[len(parent.children) - 1].path[len(parent.children[len(parent.children) - 1].path) - 1]) == true{
+				if len(parent.children) > 1 {
+					parent.children = append(parent.children[:len(parent.children) - 1], newRoute, parent.children[len(parent.children) - 1])
+				} else {
+
+					parent.children = append([] *route{newRoute}, parent.children...)
+				}
+			} else {
+				parent.children = append(parent.children, newRoute)
+			}
 			parent = newRoute
 		}
 	} else {
-		for _, route := range r.routes {
+		for i, route := range r.routes {
 			if route.path[len(route.path)-1] == pathNodes[0] {
+				parent = route
+				found = true
+				break
+			}
+			if i == len(r.routes) - 1 && isURLParameter(pathNodes[0]) && isURLParameter(r.routes[i].path[len(r.routes[i].path) -1]){
 				parent = route
 				found = true
 				break
@@ -155,7 +180,16 @@ func (r *router) scan(parent *route, method string, path string, handler Handler
 				path:   []string{pathNodes[0]},
 				parent: parent,
 			}
-			r.routes = append(r.routes, newRoute)
+			if isURLParameter(pathNodes[0]) == false && len(r.routes) > 0 && isURLParameter(r.routes[len(r.routes) - 1].path[len(r.routes[len(r.routes) - 1].path) - 1]) == true{
+				if len(r.routes) > 1 {
+					r.routes = append(r.routes[:len(r.routes) - 1], newRoute, r.routes[len(r.routes) - 1])
+				} else {
+
+					r.routes = append([] *route{newRoute}, r.routes...)
+				}
+			} else {
+				r.routes = append(r.routes, newRoute)
+			}
 			parent = newRoute
 		}
 	}
@@ -209,10 +243,15 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	r.parameters = make(map[string] string)
 	var tree func([]*route, int) (bool, error)
 	tree = func(routes []*route, index int) (bool, error) {
-		for _, route := range routes {
-			if route.path[len(route.path) - 1] == strings.Split(strings.Trim(request.RequestURI, "/"), "/")[index] {
+		for i, route := range routes {
+			if index > len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1 {
+				return false, nil
+			}
+			urlPath := strings.Split(strings.Trim(request.RequestURI, "/"), "/")[index]
+			if route.path[len(route.path) - 1] == urlPath {
 				if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
 					for _, handler := range route.handlers {
 						if handler.method == request.Method {
@@ -237,16 +276,38 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 						}
 					}
 				}
-				tree(route.children, index+1)
-			}
-		}
-		// Get path parameters
-		if index == len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1{
-			parameterName := routes[len(routes) - 1].path[len(routes[len(routes) - 1].path) - 1]
-			if strings.HasPrefix(parameterName, "{") &&
-				strings.HasSuffix(parameterName, "}"){
-				log.Println(parameterName[1:len(parameterName) - 1])
-				log.Println(strings.Split(strings.Trim(request.RequestURI, "/"), "/")[len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1])
+				return tree(route.children, index+1)
+			} else if i == len(routes) - 1 {
+				parameterName := routes[i].path[len(routes[i].path) - 1]
+				if isURLParameter(parameterName) == true {
+					r.parameters[strings.Trim(strings.Trim(parameterName, "{"), "}")] = urlPath
+					if index == len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1{
+						for _, handler := range route.handlers {
+							if handler.method == request.Method {
+								context := context{}
+								context.new(request, response)
+								context.Request().setURLParam(r.parameters)
+								// before middleware
+								if err := handler.middleware(&context, handler.before...); err != nil {
+									return true, err
+								}
+								reply := handler.ctrl(&context)
+								if reply != nil {
+									return true, reply
+								}
+								// after middleware
+								if err := handler.middleware(&context, handler.after...); err != nil {
+									return true, err
+								}
+								// write response
+								context.response.write()
+								return true, nil
+							}
+						}
+					}
+					return tree(route.children, index+1)
+				}
+
 			}
 		}
 		return false, nil
@@ -258,5 +319,11 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	} else if !found {
 		response.WriteHeader(http.StatusNotFound)
 	}
+}
 
+func isURLParameter(value string) bool {
+	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}"){
+		return true
+	}
+	return false
 }
