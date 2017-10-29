@@ -179,30 +179,45 @@ func (r *router) register(method string, path string, group *route, handler Hand
 	return r.scan(nil, method, path, handler)
 }
 
+// Process a request
+func (r *router) process(handler *handler, context *context, ws bool) (err error){
+	if err := handler.middleware(context, handler.before...); err != nil {
+		return err
+	}
+	if ws{
+		//TODO
+	}else {
+		err = handler.ctrl(context)
+	}
+	if err != nil {
+		return err
+	}
+	// after middleware
+	if err := handler.middleware(context, handler.after...); err != nil {
+		return err
+	}
+	// write response
+	context.response.write()
+	return nil
+}
+
 // Tree return a matching route if exist
 func (r *router) tree(routes []*route, response http.ResponseWriter, request *http.Request) (bool, error){
 	for _, route := range routes {
 		if strings.Join(route.path, "/") == strings.Trim(request.URL.Path, "/") {
 			for _, handler := range route.handlers {
-				if handler.method == request.Method {
-					context := new(context)
-					context.init(request, response)
-
-					// before middleware
-					if err := handler.middleware(context, handler.before...); err != nil {
-						return true, err
-					}
-					reply := handler.ctrl(context)
-					if reply != nil {
-						return true, reply
-					}
-					// after middleware
-					if err := handler.middleware(context, handler.after...); err != nil {
-						return true, err
-					}
-					// write response
-					context.response.write()
-					return true, nil
+				context := new(context)
+				context.init(request, response)
+				switch {
+				case context.request.IsWS():
+					// web socket call
+					return true, r.process(handler,context, true)
+				case handler.method == request.Method:
+					// http call
+					return true, r.process(handler,context, false)
+				default:
+					r.tree(route.children, response, request)
+					break
 				}
 				r.tree(route.children, response, request)
 			}
