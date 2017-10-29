@@ -21,11 +21,13 @@ type (
 		URLParam(string) string
 		FormValue(string) string
 		QueryParam(string) string
+		setURLParam(map[string] string)
 	}
 
 	request struct {
 		*context
 		r *http.Request
+		p map[string] string
 	}
 )
 
@@ -73,13 +75,18 @@ func (req *request) QueryString() string {
 }
 
 // Request return current http request
-func (req *request) Request() *http.Request{
+func (req *request) Request() *http.Request {
 	return req.r
+}
+
+// Set URL parameters
+func (req *request) setURLParam(m map[string] string) {
+	req.p = m
 }
 
 // Get a URL parameter
 func (req *request) URLParam(k string) string {
-	return req.r.URL.Query().Get(k)
+	return req.p[k]
 }
 
 // Get the form value by a given key from a application/x-www-form-urlencoded request
