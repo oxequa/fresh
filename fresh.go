@@ -55,8 +55,8 @@ type (
 		Group(string) Fresh
 		After(...HandlerFunc) Fresh
 		Before(...HandlerFunc) Fresh
-		Rest(string, ...HandlerFunc) Resource
 
+		WS(string, HandlerFunc) Handler
 		GET(string, HandlerFunc) Handler
 		POST(string, HandlerFunc) Handler
 		PUT(string, HandlerFunc) Handler
@@ -64,6 +64,7 @@ type (
 		PATCH(string, HandlerFunc) Handler
 		DELETE(string, HandlerFunc) Handler
 		OPTIONS(string, HandlerFunc) Handler
+		REST(string, ...HandlerFunc) Resource
 	}
 
 	fresh struct {
@@ -154,8 +155,13 @@ func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 	return f
 }
 
+// GET api registration
+func (f *fresh) WS(path string, handler HandlerFunc) Handler {
+	return f.router.register("WS", path, f.group, handler)
+}
+
 // Register a resource (get, post, put, delete)
-func (f *fresh) Rest(path string, h ...HandlerFunc) Resource {
+func (f *fresh) REST(path string, h ...HandlerFunc) Resource {
 	res := resource{
 		methods: []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 	}
@@ -214,8 +220,8 @@ func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
 	return f.router.register("OPTIONS", path, f.group, handler)
 }
 
-// Set context request and response
-func (c *context) new(r *http.Request, w http.ResponseWriter) {
+// Init set context request and response
+func (c *context) init(r *http.Request, w http.ResponseWriter) {
 	c.response = &response{w: w, r: r}
 	c.request = &request{r: r}
 }
