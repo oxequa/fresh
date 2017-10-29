@@ -14,8 +14,8 @@ func main() {
 	// group
 	g := f.Group("/todos/").Before(filter).After(filter)
 	g.GET("/", list)
-	f.GET("pippo", list)
-	g.GET("/{id}", single)
+	g.GET("/{todoUuid}", single)
+	g.GET("/{todoUuid}/users/{userUuid}", single)
 	f.Run()
 }
 
@@ -25,7 +25,11 @@ func list(f fresh.Context) error {
 }
 
 func single(f fresh.Context) error {
-	data := models.Todo{Title: "Buy milk"}
+	data := models.Todo{
+		Uuid: f.Request().URLParam("todoUuid"),
+		Title: "Buy milk",
+		UserUuid:  f.Request().URLParam("userUuid"),
+		}
 	return f.Response().JSON(http.StatusOK, data)
 }
 
