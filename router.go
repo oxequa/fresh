@@ -179,70 +179,77 @@ func (r *router) register(method string, path string, group *route, handler Hand
 	return r.scan(nil, method, path, handler)
 }
 
+// Tree return a matching route if exist
+func (r *router) tree(routes []*route, response http.ResponseWriter, request *http.Request) (bool, error){
+	for _, route := range routes {
+		if strings.Join(route.path, "/") == strings.Trim(request.URL.Path, "/") {
+			for _, handler := range route.handlers {
+				if handler.method == request.Method {
+					context := new(context)
+					context.init(request, response)
+
+					// before middleware
+					if err := handler.middleware(context, handler.before...); err != nil {
+						return true, err
+					}
+					reply := handler.ctrl(context)
+					if reply != nil {
+						return true, reply
+					}
+					// after middleware
+					if err := handler.middleware(context, handler.after...); err != nil {
+						return true, err
+					}
+					// write response
+					context.response.write()
+					return true, nil
+				}
+				r.tree(route.children, response, request)
+			}
+		}
+	}
+	return false, nil
+}
+
 // After middleware for a single route
 func (h *handler) After(middleware ...HandlerFunc) Handler {
-	h.after = append(h.after, middleware...)
+	if middleware != nil {
+		h.after = append(h.after, middleware...)
+	}
 	return h
 }
 
 // Before middleware for a single route
 func (h *handler) Before(middleware ...HandlerFunc) Handler {
-	h.before = append(h.before, middleware...)
+	if middleware != nil {
+		h.before = append(h.before, middleware...)
+	}
 	return h
 }
 
 // After middleware for a resource
 func (r *resource) After(middleware ...HandlerFunc) Resource {
-	for _, route := range r.rest {
-		route.After(middleware...)
+	if middleware != nil {
+		for _, route := range r.rest {
+			route.After(middleware...)
+		}
 	}
 	return r
 }
 
 // Before middleware for a resource
 func (r *resource) Before(middleware ...HandlerFunc) Resource {
-	for _, route := range r.rest {
-		route.Before(middleware...)
+	if middleware != nil {
+		for _, route := range r.rest {
+			route.Before(middleware...)
+		}
 	}
 	return r
 }
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	var tree func([]*route) (bool, error)
-	tree = func(routes []*route) (bool, error) {
-		for _, route := range routes {
-			log.Println(route.path)
-			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
-				for _, handler := range route.handlers {
-					if handler.method == request.Method {
-						context := context{}
-						context.new(request, response)
-
-						// before middleware
-						if err := handler.middleware(&context, handler.before...); err != nil {
-							return true, err
-						}
-						reply := handler.ctrl(&context)
-						if reply != nil {
-							return true, reply
-						}
-						// after middleware
-						if err := handler.middleware(&context, handler.after...); err != nil {
-							return true, err
-						}
-						// write response
-						context.response.write()
-						return true, nil
-					}
-				}
-			}
-
-			tree(route.children)
-		}
-		return false, nil
-	}
-	if found, err := tree(r.routes); found && err != nil {
+	if found, err := r.tree(r.routes, response, request); found && err != nil {
 		// Handle internal server error
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(err.Error()))
