@@ -241,12 +241,12 @@ func (r *router) tree(routes []*route, index int, response http.ResponseWriter, 
 	context.init(request, response)
 	r.parameters = make(map[string] string)
 	for i, route := range routes {
-		if index > len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1 {
+		if index > len(strings.Split(strings.Trim(request.URL.Path, "/"), "/")) - 1 {
 			return false, nil
 		}
-		urlPath := strings.Split(strings.Trim(request.RequestURI, "/"), "/")[index]
+		urlPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")[index]
 		if route.path[len(route.path) - 1] == urlPath {
-			if strings.Join(route.path, "/") == strings.Trim(request.RequestURI, "/") {
+			if strings.Join(route.path, "/") == strings.Trim(request.URL.Path, "/") {
 				for _, handler := range route.handlers {
 					switch {
 					case context.request.IsWS():
@@ -265,7 +265,7 @@ func (r *router) tree(routes []*route, index int, response http.ResponseWriter, 
 			parameterName := routes[i].path[len(routes[i].path) - 1]
 			if isURLParameter(parameterName) == true {
 				r.parameters[strings.Trim(strings.Trim(parameterName, "{"), "}")] = urlPath
-				if index == len(strings.Split(strings.Trim(request.RequestURI, "/"), "/")) - 1{
+				if index == len(strings.Split(strings.Trim(request.URL.Path, "/"), "/")) - 1{
 					for _, handler := range route.handlers {
 						switch {
 						case context.request.IsWS():
