@@ -26,13 +26,7 @@ const (
 	MIMEText       = "text/plain" + ";" + UTF8
 )
 
-// Encoding Chartset
-const (
-	UTF8     = "charset=UTF-8"
-	ISO88591 = "chartset=ISO-8859-1"
-)
-
-// Header types
+// Header access
 const (
 	Location                      = "Location"
 	ContentType                   = "Content-Type"
@@ -44,6 +38,42 @@ const (
 	AccessControlExposeHeaders    = "Access-Control-Expose-Headers"
 	AccessControlRequestHeaders   = "Access-Control-Request-Headers"
 	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
+)
+
+// Header request
+const (
+	HeaderAccept              = "Accept"
+	HeaderAcceptEncoding      = "Accept-Encoding"
+	HeaderAllow               = "Allow"
+	HeaderAuthorization       = "Authorization"
+	HeaderContentDisposition  = "Content-Disposition"
+	HeaderContentEncoding     = "Content-Encoding"
+	HeaderContentLength       = "Content-Length"
+	HeaderContentType         = "Content-Type"
+	HeaderCookie              = "Cookie"
+	HeaderSetCookie           = "Set-Cookie"
+	HeaderIfModifiedSince     = "If-Modified-Since"
+	HeaderLastModified        = "Last-Modified"
+	HeaderLocation            = "Location"
+	HeaderUpgrade             = "Upgrade"
+	HeaderVary                = "Vary"
+	HeaderWWWAuthenticate     = "WWW-Authenticate"
+	HeaderXForwardedFor       = "X-Forwarded-For"
+	HeaderXForwardedProto     = "X-Forwarded-Proto"
+	HeaderXForwardedProtocol  = "X-Forwarded-Protocol"
+	HeaderXForwardedSsl       = "X-Forwarded-Ssl"
+	HeaderXUrlScheme          = "X-Url-Scheme"
+	HeaderXHTTPMethodOverride = "X-HTTP-Method-Override"
+	HeaderXRealIP             = "X-Real-IP"
+	HeaderXRequestID          = "X-Request-ID"
+	HeaderServer              = "Server"
+	HeaderOrigin              = "Origin"
+)
+
+// Encoding chartset
+const (
+	UTF8     = "charset=UTF-8"
+	ISO88591 = "chartset=ISO-8859-1"
 )
 
 // Main Fresh structure
