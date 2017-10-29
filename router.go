@@ -240,6 +240,7 @@ func (r *router) tree(routes []*route, index int, response http.ResponseWriter, 
 	context := new(context)
 	context.init(request, response)
 	r.parameters = make(map[string] string)
+	//TODO refactor
 	for i, route := range routes {
 		if index > len(strings.Split(strings.Trim(request.URL.Path, "/"), "/")) - 1 {
 			return false, nil
