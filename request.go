@@ -12,6 +12,7 @@ type (
 	Request interface {
 		IsWS() bool
 		IsTSL() bool
+		Method() string
 		Map(interface{})
 		Form() url.Values
 		Body() io.ReadCloser
@@ -42,9 +43,9 @@ func (req *request) IsTSL() bool{
 	return false
 }
 
-// Request return current http request
-func (req *request) Request() *http.Request{
-	return req.r
+// Method current request
+func (req *request) Method() string{
+	return req.r.Method
 }
 
 // Get the form from a application/x-www-form-urlencoded request
@@ -69,6 +70,11 @@ func (req *request) Body() io.ReadCloser {
 // Get the query string
 func (req *request) QueryString() string {
 	return req.r.URL.RawQuery
+}
+
+// Request return current http request
+func (req *request) Request() *http.Request{
+	return req.r
 }
 
 // Get a URL parameter
