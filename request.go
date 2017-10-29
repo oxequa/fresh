@@ -10,9 +10,9 @@ import (
 // Request structure
 type (
 	Request interface {
+		IsWS() bool
+		IsTSL() bool
 		Map(interface{})
-		IsWS(*http.Request) bool
-		IsTSL(*http.Request) bool
 		Form() url.Values
 		Body() io.ReadCloser
 		QueryString() string
