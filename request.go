@@ -11,9 +11,12 @@ import (
 type (
 	Request interface {
 		Map(interface{})
+		IsWS(*http.Request) bool
+		IsTSL(*http.Request) bool
 		Form() url.Values
 		Body() io.ReadCloser
 		QueryString() string
+		Request() *http.Request
 		URLParam(string) string
 		FormValue(string) string
 		QueryParam(string) string
@@ -25,6 +28,24 @@ type (
 	}
 )
 
+// IsTSL check for a web socket request
+func (req *request) IsWS() bool{
+	h := req.r.Header.Get(Upgrade)
+	return h == "websocket" || h == "Websocket"
+}
+
+// IsTSL check for a tsl request
+func (req *request) IsTSL() bool{
+	if req.r.TLS != nil{
+		return true
+	}
+	return false
+}
+
+// Request return current http request
+func (req *request) Request() *http.Request{
+	return req.r
+}
 
 // Get the form from a application/x-www-form-urlencoded request
 func (req *request) Form() url.Values {
