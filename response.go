@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"golang.org/x/net/websocket"
 )
 
 type (
 	Response interface {
 		write()
 		Code(int) error
+		WS() *websocket.Conn
 		Raw(int, string) error
 		HTML(int, string) error
 		File(int, string) error
@@ -29,6 +31,7 @@ type (
 		*context
 		w        http.ResponseWriter
 		r        *http.Request
+		ws		 *websocket.Conn
 		err      error
 		code     int
 		response []byte
@@ -61,6 +64,11 @@ func (r *response) set(code int, response []byte, err error) {
 func (r *response) Code(c int) error {
 	r.set(c, nil, nil)
 	return nil
+}
+
+// Websocket instance
+func (r *response) WS() *websocket.Conn {
+	return r.ws
 }
 
 // Raw response
