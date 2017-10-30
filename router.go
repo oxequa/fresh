@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"golang.org/x/net/websocket"
 )
 
 // Handler struct
@@ -51,7 +50,23 @@ type (
 	}
 )
 
-// Return the func name
+// getURLParameter return param name
+func getURLParameter(value string) string {
+	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}"){
+		return strings.Trim(strings.Trim(value, "{"), "}")
+	}
+	return ""
+}
+
+// isURLParameter check if given string is a param
+func isURLParameter(value string) bool {
+	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}"){
+		return true
+	}
+	return false
+}
+
+// TODO remove
 func getFuncName(f interface{}) string {
 	path := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 	name := strings.Split(path, "/")
@@ -221,16 +236,8 @@ func (r *router) process(handler *handler, response http.ResponseWriter, request
 	if err = handler.middleware(context, handler.before...); err != nil {
 		return err
 	}
-	// route type
-	switch {
-	case context.request.IsWS():
-		websocket.Handler(func(ws *websocket.Conn) {
-			defer ws.Close()
-			err = handler.ctrl(context)
-		}).ServeHTTP(response,request)
-	default:
-		err = handler.ctrl(context)
-	}
+	// route controller
+	err = handler.ctrl(context)
 	if err != nil {
 		return err
 	}
@@ -326,18 +333,4 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	} else if !found {
 		response.WriteHeader(http.StatusNotFound)
 	}
-}
-
-func getURLParameter(value string) string {
-	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}"){
-		return strings.Trim(strings.Trim(value, "{"), "}")
-	}
-	return ""
-}
-
-func isURLParameter(value string) bool {
-	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}"){
-		return true
-	}
-	return false
 }

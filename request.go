@@ -5,31 +5,41 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"golang.org/x/net/websocket"
 )
 
 // Request structure
 type (
 	Request interface {
+		setURLParam(map[string] string)
+
 		IsWS() bool
 		IsTSL() bool
 		Method() string
 		Map(interface{})
 		Form() url.Values
+		Get() *http.Request
+		WS() *websocket.Conn
 		Body() io.ReadCloser
 		QueryString() string
-		Request() *http.Request
+		SetWS(*websocket.Conn)
 		URLParam(string) string
 		FormValue(string) string
 		QueryParam(string) string
-		setURLParam(map[string] string)
 	}
 
 	request struct {
 		*context
 		r *http.Request
+		ws *websocket.Conn
 		p map[string] string
 	}
 )
+
+// Set URL parameters
+func (req *request) setURLParam(m map[string] string) {
+	req.p = m
+}
 
 // IsTSL check for a web socket request
 func (req *request) IsWS() bool{
@@ -64,6 +74,16 @@ func (req *request) Map(i interface{}) {
 	// TODO: handle errors
 }
 
+// Request return current http request
+func (req *request) Get() *http.Request {
+	return req.r
+}
+
+// IsTSL check for a web socket request
+func (req *request) WS() *websocket.Conn{
+	return req.ws
+}
+
 // Get the body from a application/json request
 func (req *request) Body() io.ReadCloser {
 	return req.r.Body
@@ -74,14 +94,9 @@ func (req *request) QueryString() string {
 	return req.r.URL.RawQuery
 }
 
-// Request return current http request
-func (req *request) Request() *http.Request {
-	return req.r
-}
-
-// Set URL parameters
-func (req *request) setURLParam(m map[string] string) {
-	req.p = m
+// SetWS used by the current request
+func (req *request) SetWS(ws *websocket.Conn){
+	req.ws = ws
 }
 
 // Get a URL parameter

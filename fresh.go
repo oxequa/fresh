@@ -12,6 +12,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"golang.org/x/net/websocket"
 )
 
 // MIME types
@@ -185,7 +186,15 @@ func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 
 // WS api registration
 func (f *fresh) WS(path string, handler HandlerFunc) Handler {
-	return f.router.register("GET", path, f.group, handler)
+	h := func(c Context) (err error){
+		websocket.Handler(func(ws *websocket.Conn) {
+			defer ws.Close()
+			c.Request().SetWS(ws)
+			err = handler(c)
+		}).ServeHTTP(c.Response().Get(),c.Request().Get())
+		return err
+	}
+	return f.router.register("GET", path, f.group, h)
 }
 
 // Register a resource (get, post, put, delete)
