@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"golang.org/x/net/websocket"
 )
 
 // Handler struct
@@ -130,7 +131,7 @@ func (r *router) scan(parent *route, method string, path string, handler Handler
 		return parent.add(method, handler)
 	}
 
-	// TODO: refactor
+	//TODO: refactor
 	found := false
 	if parent != nil {
 		for i, route := range parent.children {
@@ -214,75 +215,67 @@ func (r *router) register(method string, path string, group *route, handler Hand
 }
 
 // Process a request
-func (r *router) process(handler *handler, context *context, ws bool) (err error){
-	if err := handler.middleware(context, handler.before...); err != nil {
+func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request) (err error){
+	context := new(context)
+	context.init(request, response)
+	if err = handler.middleware(context, handler.before...); err != nil {
 		return err
 	}
-	if ws{
-		//TODO
-	}else {
+	// route type
+	switch {
+	case context.request.IsWS():
+		websocket.Handler(func(ws *websocket.Conn) {
+			defer ws.Close()
+			err = handler.ctrl(context)
+		}).ServeHTTP(response,request)
+	default:
 		err = handler.ctrl(context)
 	}
 	if err != nil {
 		return err
 	}
 	// after middleware
-	if err := handler.middleware(context, handler.after...); err != nil {
+	if err = handler.middleware(context, handler.after...); err != nil {
 		return err
 	}
 	// write response
 	context.response.write()
-	return nil
+	return
 }
 
 // Tree return a matching route if exist
 func (r *router) tree(routes []*route, index int, response http.ResponseWriter, request *http.Request) (bool, error){
-	context := new(context)
-	context.init(request, response)
 	r.parameters = make(map[string] string)
-	//TODO refactor
+	//TODO refactor https://golang.org/doc/play/tree.go
 	for i, route := range routes {
-		if index > len(strings.Split(strings.Trim(request.URL.Path, "/"), "/")) - 1 {
-			return false, nil
-		}
-		urlPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")[index]
-		if route.path[len(route.path) - 1] == urlPath {
-			if strings.Join(route.path, "/") == strings.Trim(request.URL.Path, "/") {
+		// clean path
+		request.URL.Path = strings.Trim(request.URL.Path, "/")
+		listPath := strings.Split(request.URL.Path, "/")
+		urlPath := strings.Join(route.path, "/")
+		switch {
+		case index > len(listPath) - 1:
+			break
+		case route.path[len(route.path) - 1] == listPath[index]:
+			if urlPath == request.URL.Path {
 				for _, handler := range route.handlers {
-					switch {
-					case context.request.IsWS():
-						// web socket call
-						return true, r.process(handler,context, true)
-					case handler.method == request.Method:
-						// http call
-						return true, r.process(handler,context, false)
-					default:
-						break
+					if handler.method == request.Method{
+						return true, r.process(handler, response, request)
 					}
 				}
 			}
 			return r.tree(route.children, index+1, response, request)
-		} else if i == len(routes) - 1 {
-			parameterName := routes[i].path[len(routes[i].path) - 1]
-			if isURLParameter(parameterName) == true {
-				r.parameters[strings.Trim(strings.Trim(parameterName, "{"), "}")] = urlPath
-				if index == len(strings.Split(strings.Trim(request.URL.Path, "/"), "/")) - 1{
+		case i == len(routes) - 1:
+			if name := getURLParameter(routes[i].path[len(routes[i].path) - 1]); name != "" {
+				r.parameters[name] = urlPath
+				if index == len(listPath) - 1{
 					for _, handler := range route.handlers {
-						switch {
-						case context.request.IsWS():
-							// web socket call
-							return true, r.process(handler,context, true)
-						case handler.method == request.Method:
-							// http call
-							return true, r.process(handler,context, false)
-						default:
-							break
+						if handler.method == request.Method{
+							return true, r.process(handler, response, request)
 						}
 					}
 				}
 				return r.tree(route.children, index+1,response,request)
 			}
-
 		}
 	}
 	return false, nil
@@ -333,6 +326,13 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	} else if !found {
 		response.WriteHeader(http.StatusNotFound)
 	}
+}
+
+func getURLParameter(value string) string {
+	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}"){
+		return strings.Trim(strings.Trim(value, "{"), "}")
+	}
+	return ""
 }
 
 func isURLParameter(value string) bool {

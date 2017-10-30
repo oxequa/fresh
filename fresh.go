@@ -183,9 +183,9 @@ func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 	return f
 }
 
-// GET api registration
+// WS api registration
 func (f *fresh) WS(path string, handler HandlerFunc) Handler {
-	return f.router.register("WS", path, f.group, handler)
+	return f.router.register("GET", path, f.group, handler)
 }
 
 // Register a resource (get, post, put, delete)
