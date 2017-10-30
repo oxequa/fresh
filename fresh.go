@@ -166,11 +166,11 @@ func (f *fresh) Config() Config{
 }
 
 // Group registration
-func (f fresh) Group(path string) Fresh {
+func (f *fresh) Group(path string) Fresh {
 	f.group = &route{
 		path: strings.Split(path, "/"),
 	}
-	return &f
+	return f
 }
 
 // After middleware
@@ -258,7 +258,7 @@ func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
 	return f.router.register("OPTIONS", path, f.group, handler)
 }
 
-// STATIC serve a list of static files. Array of files or directories TODO write logic 
+// STATIC serve a list of static files. Array of files or directories TODO write logic
 func (f *fresh) STATIC([]string) Handler{
 	return &handler{}
 }
