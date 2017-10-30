@@ -85,6 +85,7 @@ type (
 		After(...HandlerFunc) Fresh
 		Before(...HandlerFunc) Fresh
 
+		STATIC([]string) Handler
 		WS(string, HandlerFunc) Handler
 		GET(string, HandlerFunc) Handler
 		POST(string, HandlerFunc) Handler
@@ -255,6 +256,11 @@ func (f *fresh) DELETE(path string, handler HandlerFunc) Handler {
 // OPTIONS api registration
 func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
 	return f.router.register("OPTIONS", path, f.group, handler)
+}
+
+// STATIC serve a list of static files. Array of files or directories TODO write logic 
+func (f *fresh) STATIC([]string) Handler{
+	return &handler{}
 }
 
 // Init set context request and response
