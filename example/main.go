@@ -12,12 +12,19 @@ func main() {
 	f := fresh.New()
 	f.Config().SetPort(8080)
 	// group
-	g := f.Group("/todos/").Before(filter).After(filter)
+
+	// TODO: test group management
+	g := f.Group("/todos").Before(filter).After(filter)
 	g.GET("/", list)
-	g.GET("/{todoUuid}", single)
-	g.GET("/{todoUuid}/users/{userUuid}", single)
-	f.WS("ws",socket)
+	g.GET(":todoUuid", single)
+	g.GET("/:todoUuid/tests/:testUuid", single)
+	//f.WS("ws",socket)
+	f.GET("/tests", list)
+	f.GET("/tests/:testUuid", single)
+	f.GET("/tests/:testUuid/todos", single)
+	f.GET("/tests/:testUuid/todos/:todosUuid", single)
 	f.Run()
+
 }
 
 func list(f fresh.Context) error {
@@ -27,7 +34,7 @@ func list(f fresh.Context) error {
 
 func single(f fresh.Context) error {
 	data := models.Todo{
-		Uuid: f.Request().URLParam("todoUuid"),
+		Uuid: f.Request().URLParam("id"),
 		Title: "Buy milk",
 		UserUuid:  f.Request().URLParam("userUuid"),
 		}

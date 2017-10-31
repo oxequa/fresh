@@ -94,7 +94,7 @@ type (
 		PATCH(string, HandlerFunc) Handler
 		DELETE(string, HandlerFunc) Handler
 		OPTIONS(string, HandlerFunc) Handler
-		REST(string, ...HandlerFunc) Resource
+		CRUD(string, ...HandlerFunc) Resource
 	}
 
 	fresh struct {
@@ -112,6 +112,7 @@ type (
 	context struct {
 		request  Request
 		response Response
+		parameters map[string] string
 	}
 
 	HandlerFunc func(Context) error
@@ -122,7 +123,7 @@ func New() Fresh {
 	fresh := fresh{
 		config: new(config),
 		server: new(http.Server),
-		router: new(router),
+		router: &router{&route{}, &context{}},
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
@@ -168,7 +169,7 @@ func (f *fresh) Config() Config{
 // Group registration
 func (f *fresh) Group(path string) Fresh {
 	f.group = &route{
-		path: strings.Split(path, "/"),
+		path: path,
 	}
 	return f
 }
@@ -199,7 +200,7 @@ func (f *fresh) WS(path string, handler HandlerFunc) Handler {
 }
 
 // Register a resource (get, post, put, delete)
-func (f *fresh) REST(path string, h ...HandlerFunc) Resource {
+func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 	res := resource{
 		methods: []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 	}
@@ -267,6 +268,7 @@ func (f *fresh) STATIC([]string) Handler{
 func (c *context) init(r *http.Request, w http.ResponseWriter) {
 	c.response = &response{w: w, r: r}
 	c.request = &request{r: r}
+	c.request.setURLParam(c.parameters)
 }
 
 // Return context request
