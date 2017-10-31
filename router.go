@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"path/filepath"
 )
 
 // Handler struct
@@ -155,8 +154,8 @@ func (r *router) register(method string, path string, group *route, handler Hand
 
 	// TODO: manage groups routes
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
-	new := r.scanTree(r.route, splittedPath, true)
-	new.add(method, handler)
+	route := r.scanTree(r.route, splittedPath, true)
+	route.add(method, handler)
 	return nil
 }
 
@@ -232,7 +231,7 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	}
 }
 
-// Return the route and create branch if not exist
+// Scan the tree to find the matching route (if save create all needed routes)
 func (r *router) scanTree(parent *route, path []string, save bool) *route{
 	if len(path) > 0 {
 		for _,route := range parent.children {
@@ -251,15 +250,15 @@ func (r *router) scanTree(parent *route, path []string, save bool) *route{
 				return nil
 			}
 		}
-		new := &route{path:path[0], parent:parent}
+		newRoute := &route{path:path[0], parent:parent}
 		switch {
 		case isURLParameter(path[0]):
-			new.parameter = true
-			parent.children = append(parent.children, new)
+			newRoute.parameter = true
+			parent.children = append(parent.children, newRoute)
 		default:
-			parent.children = append([] *route{new}, parent.children...)
+			parent.children = append([] *route{newRoute}, parent.children...)
 		}
-		return r.scanTree(new,path[1:], save)
+		return r.scanTree(newRoute,path[1:], save)
 	}
 	return parent
 }
