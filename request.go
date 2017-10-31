@@ -2,16 +2,16 @@ package fresh
 
 import (
 	"encoding/json"
+	"golang.org/x/net/websocket"
 	"io"
 	"net/http"
 	"net/url"
-	"golang.org/x/net/websocket"
 )
 
 // Request structure
 type (
 	Request interface {
-		setURLParam(map[string] string)
+		setURLParam(map[string]string)
 
 		IsWS() bool
 		IsTSL() bool
@@ -30,33 +30,33 @@ type (
 
 	request struct {
 		*context
-		r *http.Request
+		r  *http.Request
 		ws *websocket.Conn
-		p map[string] string
+		p  map[string]string
 	}
 )
 
 // Set URL parameters
-func (req *request) setURLParam(m map[string] string) {
+func (req *request) setURLParam(m map[string]string) {
 	req.p = m
 }
 
 // IsTSL check for a web socket request
-func (req *request) IsWS() bool{
+func (req *request) IsWS() bool {
 	h := req.r.Header.Get(Upgrade)
 	return h == "websocket" || h == "Websocket"
 }
 
 // IsTSL check for a tsl request
-func (req *request) IsTSL() bool{
-	if req.r.TLS != nil{
+func (req *request) IsTSL() bool {
+	if req.r.TLS != nil {
 		return true
 	}
 	return false
 }
 
 // Method current request
-func (req *request) Method() string{
+func (req *request) Method() string {
 	return req.r.Method
 }
 
@@ -80,7 +80,7 @@ func (req *request) Get() *http.Request {
 }
 
 // IsTSL check for a web socket request
-func (req *request) WS() *websocket.Conn{
+func (req *request) WS() *websocket.Conn {
 	return req.ws
 }
 
@@ -95,7 +95,7 @@ func (req *request) QueryString() string {
 }
 
 // SetWS used by the current request
-func (req *request) SetWS(ws *websocket.Conn){
+func (req *request) SetWS(ws *websocket.Conn) {
 	req.ws = ws
 }
 

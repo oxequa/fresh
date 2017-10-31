@@ -2,6 +2,7 @@ package fresh
 
 import (
 	httpContext "context"
+	"golang.org/x/net/websocket"
 	"log"
 	"math/rand"
 	"net"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"golang.org/x/net/websocket"
 )
 
 // MIME types
@@ -32,10 +32,10 @@ const (
 	AccessControlMaxAge           = "Access-Control-Max-Age"
 	AccessControlAllowOrigin      = "Access-Control-Allow-Origin"
 	AccessControlAllowMethods     = "Access-Control-Allow-Methods"
-	AccessControlAllows     = "Access-Control-Allow-s"
+	AccessControlAllows           = "Access-Control-Allow-s"
 	AccessControlRequestMethod    = "Access-Control-Request-Method"
-	AccessControlExposes    = "Access-Control-Expose-s"
-	AccessControlRequests   = "Access-Control-Request-s"
+	AccessControlExposes          = "Access-Control-Expose-s"
+	AccessControlRequests         = "Access-Control-Request-s"
 	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
 )
 
@@ -110,9 +110,9 @@ type (
 	}
 
 	context struct {
-		request  Request
-		response Response
-		parameters map[string] string
+		request    Request
+		response   Response
+		parameters map[string]string
 	}
 
 	HandlerFunc func(Context) error
@@ -156,13 +156,14 @@ func (f *fresh) Run() error {
 	}()
 	<-shutdown
 	log.Println("Server shutdown")
-	ctx, _ := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
+	ctx, cancel := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
+	cancel()
 	return nil
 }
 
 // Config interface
-func (f *fresh) Config() Config{
+func (f *fresh) Config() Config {
 	return f.config
 }
 
@@ -188,12 +189,12 @@ func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
 
 // WS api registration
 func (f *fresh) WS(path string, handler HandlerFunc) Handler {
-	h := func(c Context) (err error){
+	h := func(c Context) (err error) {
 		websocket.Handler(func(ws *websocket.Conn) {
 			defer ws.Close()
 			c.Request().SetWS(ws)
 			err = handler(c)
-		}).ServeHTTP(c.Response().Get(),c.Request().Get())
+		}).ServeHTTP(c.Response().Get(), c.Request().Get())
 		return err
 	}
 	return f.router.register("GET", path, f.group, h)
@@ -260,7 +261,7 @@ func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
 }
 
 // STATIC serve a list of static files. Array of files or directories TODO write logic
-func (f *fresh) STATIC([]string) Handler{
+func (f *fresh) STATIC([]string) Handler {
 	return &handler{}
 }
 

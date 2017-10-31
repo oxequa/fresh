@@ -24,18 +24,18 @@ type (
 
 // Route struct
 type route struct {
-	path     	string
-	handlers 	[]*handler
-	parent   	 *route
-	children 	[]*route
-	after    	[]HandlerFunc
-	before   	[]HandlerFunc
-	parameter	bool
+	path      string
+	handlers  []*handler
+	parent    *route
+	children  []*route
+	after     []HandlerFunc
+	before    []HandlerFunc
+	parameter bool
 }
 
 // Router struct
 type router struct {
-	route *route
+	route   *route
 	context *context
 }
 
@@ -51,10 +51,9 @@ type (
 	}
 )
 
-
 // isURLParameter check if given string is a param
 func isURLParameter(value string) bool {
-	if strings.HasPrefix(value, ":"){
+	if strings.HasPrefix(value, ":") {
 		return true
 	}
 	return false
@@ -91,7 +90,7 @@ func (r *router) printRoutes() {
 		}
 		return nil
 	}
-	tree([] *route{r.route}, "")
+	tree([]*route{r.route}, "")
 }
 
 // Run a middleware
@@ -120,7 +119,7 @@ func (r *route) add(method string, controller HandlerFunc, middleware ...Handler
 	return &h
 }
 
-func (r* route) getHandler(method string) *handler {
+func (r *route) getHandler(method string) *handler {
 	for _, h := range r.handlers {
 		if h.method == method {
 			return h
@@ -129,11 +128,8 @@ func (r* route) getHandler(method string) *handler {
 	return nil
 }
 
-
 // Register a route with its handlers
 func (r *router) register(method string, path string, group *route, handler HandlerFunc) Handler {
-
-
 
 	//if group != nil {
 	//	// route middleware after group middleware
@@ -148,7 +144,7 @@ func (r *router) register(method string, path string, group *route, handler Hand
 	//	return response
 	//}
 	//if group != nil {
-		// route middleware after group middleware
+	// route middleware after group middleware
 	//	path = filepath.Join(group.path, path)
 	//}
 
@@ -160,7 +156,7 @@ func (r *router) register(method string, path string, group *route, handler Hand
 }
 
 // Process a request
-func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request) (err error){
+func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request) (err error) {
 	context := r.context
 	context.init(request, response)
 	if err = handler.middleware(context, handler.before...); err != nil {
@@ -218,9 +214,9 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	r.context.parameters = make(map[string] string)
+	r.context.parameters = make(map[string]string)
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
-	if route := r.scanTree(r.route,  splittedPath, false); route != nil {
+	if route := r.scanTree(r.route, splittedPath, false); route != nil {
 		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
 			r.process(routeHandler, response, request)
 		} else {
@@ -232,9 +228,9 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 }
 
 // Scan the tree to find the matching route (if save create all needed routes)
-func (r *router) scanTree(parent *route, path []string, save bool) *route{
+func (r *router) scanTree(parent *route, path []string, save bool) *route {
 	if len(path) > 0 {
-		for _,route := range parent.children {
+		for _, route := range parent.children {
 			if route.path == path[0] {
 				return r.scanTree(route, path[1:], save)
 			}
@@ -244,21 +240,21 @@ func (r *router) scanTree(parent *route, path []string, save bool) *route{
 			}
 		}
 		if !save {
-			if parent.children[len(parent.children) - 1].parameter {
-				return parent.children[len(parent.children) - 1]
+			if parent.children[len(parent.children)-1].parameter {
+				return parent.children[len(parent.children)-1]
 			} else {
 				return nil
 			}
 		}
-		newRoute := &route{path:path[0], parent:parent}
+		newRoute := &route{path: path[0], parent: parent}
 		switch {
 		case isURLParameter(path[0]):
 			newRoute.parameter = true
 			parent.children = append(parent.children, newRoute)
 		default:
-			parent.children = append([] *route{newRoute}, parent.children...)
+			parent.children = append([]*route{newRoute}, parent.children...)
 		}
-		return r.scanTree(newRoute,path[1:], save)
+		return r.scanTree(newRoute, path[1:], save)
 	}
 	return parent
 }

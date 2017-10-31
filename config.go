@@ -3,10 +3,10 @@ package fresh
 import (
 	"crypto/tls"
 	"encoding/json"
+	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -28,8 +28,8 @@ type (
 		*fresh
 		Port    int         `json:"port,omitempty"`    // srv port
 		Host    string      `json:"host,omitempty"`    // srv host
-		Debug   bool		`json:"debug,omitempty"`   // debug status
-		Logger  bool		`json:"logger,omitempty"`  // logger status
+		Debug   bool        `json:"debug,omitempty"`   // debug status
+		Logger  bool        `json:"logger,omitempty"`  // logger status
 		TSL     *tls.Config `json:"tsl,omitempty"`     // tsl status
 		Request *request    `json:"request,omitempty"` // request config
 		Gzip    *gzip       `json:"gzip,omitempty"`    // gzip config
@@ -78,7 +78,7 @@ func (c *config) write(path string) error {
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
 }
 
-func (c *config) SetTSL() Config{
+func (c *config) SetTSL() Config {
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(c.Host),
@@ -102,16 +102,16 @@ func (c *config) SetHost(host string) Config {
 	return c
 }
 
-func (c *config) SetDebug(status bool) Config{
+func (c *config) SetDebug(status bool) Config {
 	c.Debug = status
 	return c
 }
 
-func (c *config) SetLogger(status bool) Config{
+func (c *config) SetLogger(status bool) Config {
 	c.Logger = status
 	return c
 }
 
-func (c *config) SetCertTSL(certFile, keyFile string) Config{
+func (c *config) SetCertTSL(certFile, keyFile string) Config {
 	return c
 }
