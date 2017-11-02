@@ -14,9 +14,9 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 #### Features
 
 - RESTful API with:
--- route group management
--- filters
--- before and after handlers
+    - route group management 
+  - filters
+  - before and after handlers
 - Docker container ready
 - Microservices architecture
 - DDD (Domain Driven Design) example
@@ -43,13 +43,15 @@ func main() {
 	f.Config().SetPort(8080)
 
 	// API definition with path and related controller
-	g.GET("/todos/", list)
-
+	f.GET("/todo/", func(c fresh.Context) error{
+	    return f.Response().JSON(http.StatusOK, nil)
+	})
+    f.GET("/todo/:uuid", func(c fresh.Context) error{
+        todoUuid := c.Request().URLParam("uuid")
+        res := map[string]interface{}{ "uuid": todoUuid}
+        return f.Response().JSON(http.StatusOK, res)
+     })
 	//Start Fresh Server
 	f.Run()
-}
-
-func list(){
-    return f.Response().JSON(http.StatusOK, nil)
 }
 ```
