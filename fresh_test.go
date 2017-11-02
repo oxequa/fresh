@@ -118,7 +118,7 @@ func TestFresh_POST(t *testing.T) {
 
 func makeRequestURL(url string, values []string, parameter bool) string {
 	sep := ""
-	host := "http://localhost:" + strconv.Itoa(PORT)
+	host := "http://127.0.0.1:" + strconv.Itoa(PORT)
 	if parameter {
 		sep = ":"
 		host = ""
