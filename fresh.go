@@ -78,14 +78,20 @@ const (
 // Main Fresh structure
 type (
 	Fresh interface {
+		Rest
 		Run() error
 		Shutdown() error
 		Config() Config
+		Group(string) Group
+	}
 
-		Group(string) Fresh
-		After(...HandlerFunc) Fresh
-		Before(...HandlerFunc) Fresh
+	fresh struct {
+		config *config
+		router *router
+		server *http.Server
+	}
 
+	Rest interface{
 		STATIC([]string) Handler
 		WS(string, HandlerFunc) Handler
 		GET(string, HandlerFunc) Handler
@@ -96,13 +102,6 @@ type (
 		DELETE(string, HandlerFunc) Handler
 		OPTIONS(string, HandlerFunc) Handler
 		CRUD(string, ...HandlerFunc) Resource
-	}
-
-	fresh struct {
-		group  *route
-		config *config
-		router *router
-		server *http.Server
 	}
 
 	Context interface {
@@ -177,23 +176,14 @@ func (f *fresh) Config() Config {
 }
 
 // Group registration
-func (f *fresh) Group(path string) Fresh {
-	f.group = &route{
-		path: path,
-	}
-	return f
-}
-
-// After middleware
-func (f *fresh) After(middleware ...HandlerFunc) Fresh {
-	f.group.after = append(f.group.after, middleware...)
-	return f
-}
-
-// Before middleware
-func (f *fresh) Before(middleware ...HandlerFunc) Fresh {
-	f.group.before = append(f.group.before, middleware...)
-	return f
+func (f *fresh) Group(path string) Group {
+	g := group{
+		parent: f,
+		route:&route{
+				path:path,
+			},
+		}
+	return &g
 }
 
 // WS api registration
@@ -206,7 +196,7 @@ func (f *fresh) WS(path string, handler HandlerFunc) Handler {
 		}).ServeHTTP(c.Response().Get(), c.Request().Get())
 		return err
 	}
-	return f.router.register("GET", path, f.group, h)
+	return f.router.register("GET", path,  h)
 }
 
 // Register a resource (get, post, put, delete)
@@ -222,13 +212,13 @@ func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 	for _, method := range res.methods {
 		switch method {
 		case "GET":
-			res.rest = append(res.rest, f.router.register(method, path, f.group, h[0]))
+			res.rest = append(res.rest, f.router.register(method, path,  h[0]))
 		case "POST":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, h[1]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name,  h[1]))
 		case "PUT", "PATCH":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, h[2]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name,  h[2]))
 		case "DELETE":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, f.group, h[3]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name,  h[3]))
 		}
 	}
 	return &res
@@ -236,37 +226,37 @@ func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 
 // GET api registration
 func (f *fresh) GET(path string, handler HandlerFunc) Handler {
-	return f.router.register("GET", path, f.group, handler)
+	return f.router.register("GET", path,  handler)
 }
 
 // PUT api registration
 func (f *fresh) PUT(path string, handler HandlerFunc) Handler {
-	return f.router.register("PUT", path, f.group, handler)
+	return f.router.register("PUT", path,  handler)
 }
 
 // POST api registration
 func (f *fresh) POST(path string, handler HandlerFunc) Handler {
-	return f.router.register("POST", path, f.group, handler)
+	return f.router.register("POST", path,  handler)
 }
 
 // TRACE api registration
 func (f *fresh) TRACE(path string, handler HandlerFunc) Handler {
-	return f.router.register("TRACE", path, f.group, handler)
+	return f.router.register("TRACE", path,  handler)
 }
 
 // PATCH api registration
 func (f *fresh) PATCH(path string, handler HandlerFunc) Handler {
-	return f.router.register("PATCH", path, f.group, handler)
+	return f.router.register("PATCH", path,  handler)
 }
 
 // DELETE api registration
 func (f *fresh) DELETE(path string, handler HandlerFunc) Handler {
-	return f.router.register("DELETE", path, f.group, handler)
+	return f.router.register("DELETE", path,  handler)
 }
 
 // OPTIONS api registration
 func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
-	return f.router.register("OPTIONS", path, f.group, handler)
+	return f.router.register("OPTIONS", path,  handler)
 }
 
 // STATIC serve a list of static files. Array of files or directories TODO write logic

@@ -129,30 +129,10 @@ func (r *route) getHandler(method string) *handler {
 }
 
 // Register a route with its handlers
-func (r *router) register(method string, path string, group *route, handler HandlerFunc) Handler {
-
-	//if group != nil {
-	//	// route middleware after group middleware
-	//	path = group.fullPath + path
-	//	response := r.scan(nil, method, path, handler)
-	//	if group.after != nil {
-	//		response.After(group.after...)
-	//	}
-	//	if group.before != nil {
-	//		response.Before(group.before...)
-	//	}
-	//	return response
-	//}
-	//if group != nil {
-	// route middleware after group middleware
-	//	path = filepath.Join(group.path, path)
-	//}
-
-	// TODO: manage groups routes
+func (r *router) register(method string, path string, handler HandlerFunc) Handler {
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
 	route := r.scanTree(r.route, splittedPath, true)
-	route.add(method, handler)
-	return nil
+	return route.add(method, handler)
 }
 
 // Process a request
