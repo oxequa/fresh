@@ -79,6 +79,7 @@ const (
 type (
 	Fresh interface {
 		Run() error
+		Shutdown() error
 		Config() Config
 
 		Group(string) Fresh
@@ -160,6 +161,14 @@ func (f *fresh) Run() error {
 	f.server.Shutdown(ctx)
 	cancel()
 	return nil
+}
+
+func (f *fresh) Shutdown() error {
+	ctx, cancel := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
+	f.server.Shutdown(ctx)
+	cancel()
+	return nil
+
 }
 
 // Config interface
