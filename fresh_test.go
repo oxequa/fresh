@@ -6,47 +6,64 @@ import (
 	"net/http/httptest"
 	"io"
 	"encoding/json"
+	"io/ioutil"
+	"strings"
 )
 
-type r struct {
+type testRoute struct {
 	path string
-	args []string
+	urlParams []string
+	body dataResponse
+	code int
 }
 
-var routes = []r{
+type dataResponse struct {
+	Field   int      `json:"field"`
+	Fields []string `json:"fields"`
+}
+
+var req = []testRoute{
 	{
 		path: "/first/",
-		args: []string{},
+		urlParams: []string{},
+		body: dataResponse{Field:1,Fields:[]string{"white","black"}},
+		code: http.StatusOK,
 	},
 	{
 		path: "/first/:/",
-		args: []string{"1"},
+		urlParams: []string{"1"},
+		body: dataResponse{Field:1,Fields:[]string{"brown","charcoal"}},
+		code: http.StatusCreated,
 	},
 	{
 		path: "/first/:/second",
-		args: []string{"1"},
+		urlParams: []string{"1"},
+		body: dataResponse{Field:1,Fields:[]string{"yellow"}},
+		code: http.StatusOK,
 	},
 	{
 		path: "/first/:/second/:/",
-		args: []string{"1","2"},
+		urlParams: []string{"1","2"},
+		body: dataResponse{Field:1,Fields:[]string{"blue"}},
+		code: http.StatusForbidden,
 	},
 	{
 		path: "/first/:/second/:/third",
-		args: []string{"1","2"},
+		urlParams: []string{"1","2"},
+		body: dataResponse{Field:1,Fields:[]string{"red"}},
+		code: http.StatusOK,
 	},
 	{
 		path: "/first/:/second/:/third/:/",
-		args: []string{"1","2","3"},
+		urlParams: []string{"1","2","3"},
+		body: dataResponse{Field:1,Fields:[]string{"blue","violet"}},
+		code: http.StatusOK,
 	},
 }
 
-func ctrl(args []string) HandlerFunc{
+func ctrl(r testRoute) HandlerFunc{
 	return func(context Context) error {
-		data := make(map[string]string)
-		for _, val := range args {
-			data[val] = val
-		}
-		return context.Response().JSON(http.StatusOK, data)
+		return context.Response().JSON(r.code, r.body)
 	}
 }
 
@@ -60,46 +77,48 @@ func setup() (fresh){
 }
 
 func requests(method string, f *fresh){
-	for _, elm := range routes {
+	for _, elm := range req {
+		// set url params
+		for _, v := range elm.urlParams {
+			elm.path = strings.Replace(elm.path, ":/", ":"+v+"/", 1)
+		}
 		switch method {
 		case "GET":
-			f.GET(elm.path,ctrl(elm.args))
+			f.GET(elm.path,ctrl(elm))
 		case "POST":
-			f.POST(elm.path,ctrl(elm.args))
+			f.POST(elm.path,ctrl(elm))
 		case "PUT":
-			f.PUT(elm.path,ctrl(elm.args))
+			f.PUT(elm.path,ctrl(elm))
 		case "TRACE":
-			f.TRACE(elm.path,ctrl(elm.args))
+			f.TRACE(elm.path,ctrl(elm))
 		case "PATCH":
-			f.PATCH(elm.path,ctrl(elm.args))
+			f.PATCH(elm.path,ctrl(elm))
 		case "DELETE":
-			f.DELETE(elm.path,ctrl(elm.args))
+			f.DELETE(elm.path,ctrl(elm))
 		case "OPTIONS":
-			f.OPTIONS(elm.path,ctrl(elm.args))
+			f.OPTIONS(elm.path,ctrl(elm))
 		}
 	}
 }
 
 func records(method string, body io.Reader, f fresh, t *testing.T){
-	for _, elm := range routes {
+	for _, elm := range req {
 		rec := httptest.NewRecorder()
 		req, err := http.NewRequest(method, elm.path, body)
 		if err != nil {
 			t.Fatal("Creating", method, elm, "request failed!")
 		}
 		f.router.ServeHTTP(rec,req)
-		if rec.Code != http.StatusOK {
-			t.Fatal("Server error: Returned ", rec.Code, " instead of ", http.StatusOK)
+		// status code
+		if rec.Code != elm.code {
+			t.Fatal("Server error: Returned ", rec.Code, " instead of ", elm.code)
 		}
-		data := make(map[string]string)
-		err = json.NewDecoder(rec.Body).Decode(&data)
-		if err != nil {
-			t.Error(err)
-		}
-		for _, value := range elm.args {
-			if data[value] != value {
-				t.Error("Response mismatch")
-			}
+		// body
+		expected, _ := json.Marshal(elm.body)
+		body, _ := ioutil.ReadAll(rec.Body)
+		result := string(body)
+		if result != string(expected) {
+			t.Fatal("Expected", elm.body, "instead", rec.Body)
 		}
 	}
 }
@@ -122,4 +141,40 @@ func TestFresh_GET(t *testing.T) {
 	f := setup()
 	requests("GET", &f)
 	records("GET",nil, f, t)
+}
+
+func TestFresh_PUT(t *testing.T) {
+	f := setup()
+	requests("PUT", &f)
+	records("PUT",nil, f, t)
+}
+
+func TestFresh_POST(t *testing.T) {
+	f := setup()
+	requests("POST", &f)
+	records("POST",nil, f, t)
+}
+
+func TestFresh_TRACE(t *testing.T) {
+	f := setup()
+	requests("TRACE", &f)
+	records("TRACE",nil, f, t)
+}
+
+func TestFresh_PATCH(t *testing.T) {
+	f := setup()
+	requests("PATCH", &f)
+	records("PATCH",nil, f, t)
+}
+
+func TestFresh_DELETE(t *testing.T) {
+	f := setup()
+	requests("DELETE", &f)
+	records("DELETE",nil, f, t)
+}
+
+func TestFresh_OPTIONS(t *testing.T) {
+	f := setup()
+	requests("OPTIONS", &f)
+	records("OPTIONS",nil, f, t)
 }
