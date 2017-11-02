@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"math/rand"
 )
 
-const PORT = 8080
+var PORT = rand.Intn(9999-1111) + 1111
 
 type Data struct {
 	Data string `json:"data"`
