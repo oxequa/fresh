@@ -9,7 +9,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 #### Wiki
 
 - [Features list](#features)
-- [Getting Started](#installation)
+- [Getting Started](#getting-started)
 
 #### Features
 
@@ -17,7 +17,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
     - route group management 
   - filters
   - before and after handlers
-- Docker container ready
+- Ready to use with Docker Image ([see here](https://hub.docker.com/r/tockins/fresh/))
 - Microservices architecture
 - DDD (Domain Driven Design) example
 - Cli commands to create project and logs
@@ -27,7 +27,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 </p>
 
 
-#### Installation
+#### Getting Started
 
 Run this to get/install:
 ```
