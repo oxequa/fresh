@@ -9,7 +9,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 #### Wiki
 
 - [Features list](#features)
-- [Getting Started](#installation)
+- [Getting Started](#getting-started)
 
 #### Features
 
@@ -27,7 +27,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 </p>
 
 
-#### Installation
+#### Getting Started
 
 Run this to get/install:
 ```
