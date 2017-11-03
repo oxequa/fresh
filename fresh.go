@@ -123,7 +123,7 @@ func New() Fresh {
 	fresh := fresh{
 		config: new(config),
 		server: new(http.Server),
-		router: &router{&route{}, &context{}},
+		router: &router{&route{}},
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {

@@ -36,7 +36,6 @@ type route struct {
 // Router struct
 type router struct {
 	route   *route
-	context *context
 }
 
 // Resource struct
@@ -131,13 +130,12 @@ func (r *route) getHandler(method string) *handler {
 // Register a route with its handlers
 func (r *router) register(method string, path string, handler HandlerFunc) Handler {
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
-	route := r.scanTree(r.route, splittedPath, true)
+	route := r.scanTree(r.route, splittedPath, nil, true)
 	return route.add(method, handler)
 }
 
 // Process a request
-func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request) (err error) {
-	context := r.context
+func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request, context *context) (err error) {
 	context.init(request, response)
 	if err = handler.middleware(context, handler.before...); err != nil {
 		return err
@@ -194,11 +192,12 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	r.context.parameters = make(map[string]string)
+	context := &context{}
+	context.parameters = make(map[string]string)
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
-	if route := r.scanTree(r.route, splittedPath, false); route != nil {
+	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
 		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
-			r.process(routeHandler, response, request)
+			r.process(routeHandler, response, request, context)
 		} else {
 			response.WriteHeader(http.StatusNotFound)
 		}
@@ -208,15 +207,15 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 }
 
 // Scan the tree to find the matching route (if save create all needed routes)
-func (r *router) scanTree(parent *route, path []string, save bool) *route {
+func (r *router) scanTree(parent *route, path []string, context *context, save bool) *route {
 	if len(path) > 0 {
 		for _, route := range parent.children {
 			if route.path == path[0] {
-				return r.scanTree(route, path[1:], save)
+				return r.scanTree(route, path[1:], context, save)
 			}
 			if !save && route.parameter {
-				r.context.parameters[route.path[1:]] = path[0]
-				return r.scanTree(route, path[1:], save)
+				context.parameters[route.path[1:]] = path[0]
+				return r.scanTree(route, path[1:], context, save)
 			}
 		}
 		if !save {
@@ -234,7 +233,7 @@ func (r *router) scanTree(parent *route, path []string, save bool) *route {
 		default:
 			parent.children = append([]*route{newRoute}, parent.children...)
 		}
-		return r.scanTree(newRoute, path[1:], save)
+		return r.scanTree(newRoute, path[1:], context, save)
 	}
 	return parent
 }
