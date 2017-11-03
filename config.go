@@ -26,7 +26,7 @@ type (
 
 	config struct {
 		*fresh
-		Logs	bool		`json:"logs,omitempty"`	   // srv lead
+		Logs    bool        `json:"logs,omitempty"`    // srv lead
 		Port    int         `json:"port,omitempty"`    // srv port
 		Host    string      `json:"host,omitempty"`    // srv host
 		Debug   bool        `json:"debug,omitempty"`   // debug status
