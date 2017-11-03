@@ -15,6 +15,7 @@ type (
 
 		IsWS() bool
 		IsTSL() bool
+		URL() *url.URL
 		Method() string
 		Map(interface{})
 		Form() url.Values
@@ -36,11 +37,6 @@ type (
 	}
 )
 
-// Set URL parameters
-func (req *request) setURLParam(m map[string]string) {
-	req.p = m
-}
-
 // IsTSL check for a web socket request
 func (req *request) IsWS() bool {
 	h := req.r.Header.Get(Upgrade)
@@ -53,6 +49,11 @@ func (req *request) IsTSL() bool {
 		return true
 	}
 	return false
+}
+
+// Set URL parameters
+func (req *request) URL() *url.URL {
+	return req.r.URL
 }
 
 // Method current request
@@ -112,4 +113,9 @@ func (req *request) FormValue(k string) string {
 // Get a query string parameter
 func (req *request) QueryParam(k string) string {
 	return req.r.URL.Query().Get(k)
+}
+
+// Set URL parameters
+func (req *request) setURLParam(m map[string]string) {
+	req.p = m
 }

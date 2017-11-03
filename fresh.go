@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -27,7 +28,7 @@ const (
 	MIMEText       = "text/plain" + ";" + UTF8
 )
 
-//  access
+// Access
 const (
 	AccessControlMaxAge           = "Access-Control-Max-Age"
 	AccessControlAllowOrigin      = "Access-Control-Allow-Origin"
@@ -39,7 +40,7 @@ const (
 	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
 )
 
-//  request
+// Request
 const (
 	Accept              = "Accept"
 	AcceptEncoding      = "Accept-Encoding"
@@ -91,8 +92,8 @@ type (
 		server *http.Server
 	}
 
-	Rest interface{
-		STATIC([]string) Handler
+	Rest interface {
+		ASSETS(map[string]string)
 		WS(string, HandlerFunc) Handler
 		GET(string, HandlerFunc) Handler
 		POST(string, HandlerFunc) Handler
@@ -162,6 +163,12 @@ func (f *fresh) Run() error {
 	return nil
 }
 
+// Config interface
+func (f *fresh) Config() Config {
+	return f.config
+}
+
+// Shutdown server
 func (f *fresh) Shutdown() error {
 	ctx, cancel := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
@@ -170,19 +177,14 @@ func (f *fresh) Shutdown() error {
 
 }
 
-// Config interface
-func (f *fresh) Config() Config {
-	return f.config
-}
-
 // Group registration
 func (f *fresh) Group(path string) Group {
 	g := group{
 		parent: f,
-		route:&route{
-				path:path,
-			},
-		}
+		route: &route{
+			path: path,
+		},
+	}
 	return &g
 }
 
@@ -196,7 +198,7 @@ func (f *fresh) WS(path string, handler HandlerFunc) Handler {
 		}).ServeHTTP(c.Response().Get(), c.Request().Get())
 		return err
 	}
-	return f.router.register("GET", path,  h)
+	return f.router.register("GET", path, h)
 }
 
 // Register a resource (get, post, put, delete)
@@ -212,13 +214,13 @@ func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 	for _, method := range res.methods {
 		switch method {
 		case "GET":
-			res.rest = append(res.rest, f.router.register(method, path,  h[0]))
+			res.rest = append(res.rest, f.router.register(method, path, h[0]))
 		case "POST":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name,  h[1]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, h[1]))
 		case "PUT", "PATCH":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name,  h[2]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, h[2]))
 		case "DELETE":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name,  h[3]))
+			res.rest = append(res.rest, f.router.register(method, path+"/"+name, h[3]))
 		}
 	}
 	return &res
@@ -226,42 +228,67 @@ func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 
 // GET api registration
 func (f *fresh) GET(path string, handler HandlerFunc) Handler {
-	return f.router.register("GET", path,  handler)
+	return f.router.register("GET", path, handler)
 }
 
 // PUT api registration
 func (f *fresh) PUT(path string, handler HandlerFunc) Handler {
-	return f.router.register("PUT", path,  handler)
+	return f.router.register("PUT", path, handler)
 }
 
 // POST api registration
 func (f *fresh) POST(path string, handler HandlerFunc) Handler {
-	return f.router.register("POST", path,  handler)
+	return f.router.register("POST", path, handler)
 }
 
 // TRACE api registration
 func (f *fresh) TRACE(path string, handler HandlerFunc) Handler {
-	return f.router.register("TRACE", path,  handler)
+	return f.router.register("TRACE", path, handler)
 }
 
 // PATCH api registration
 func (f *fresh) PATCH(path string, handler HandlerFunc) Handler {
-	return f.router.register("PATCH", path,  handler)
+	return f.router.register("PATCH", path, handler)
 }
 
 // DELETE api registration
 func (f *fresh) DELETE(path string, handler HandlerFunc) Handler {
-	return f.router.register("DELETE", path,  handler)
+	return f.router.register("DELETE", path, handler)
 }
 
 // OPTIONS api registration
 func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
-	return f.router.register("OPTIONS", path,  handler)
+	return f.router.register("OPTIONS", path, handler)
 }
 
-// STATIC serve a list of static files. Array of files or directories TODO write logic
-func (f *fresh) STATIC([]string) Handler {
-	return &handler{}
+// ASSETS serve a list of static files. Array of files or directories TODO write logic
+func (f *fresh) ASSETS(assets map[string]string) {
+	for index, asset := range assets {
+		handler := func(c Context) error {
+			var path string
+			var err error
+			w := c.Response().Get()
+			r := c.Request().Get()
+			ext := filepath.Ext(asset)
+			if ext != "" {
+				path, err = filepath.Abs(c.Request().URL().Path)
+			} else {
+				path = filepath.Join(asset, c.Request().URL().Path)
+				path, err = filepath.Abs(path)
+			}
+			if err != nil {
+				http.NotFound(w, r)
+				return nil
+			}
+			if f, err := os.Stat(path); err == nil && !f.IsDir() {
+				http.ServeFile(w, r, path)
+				return nil
+			}
+			http.NotFound(w, r)
+			return nil
+		}
+		f.router.register("STATIC", index, handler)
+	}
 }
 
 // Init set context request and response

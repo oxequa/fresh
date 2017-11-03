@@ -35,7 +35,7 @@ type route struct {
 
 // Router struct
 type router struct {
-	route   *route
+	route *route
 }
 
 // Resource struct
@@ -197,12 +197,15 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
 	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
 		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
-			r.process(routeHandler, response, request, context)
+			err := r.process(routeHandler, response, request, context)
+			if err != nil {
+				http.Error(response, err.Error(), http.StatusInternalServerError)
+			}
 		} else {
-			response.WriteHeader(http.StatusNotFound)
+			http.NotFound(response, request)
 		}
 	} else {
-		response.WriteHeader(http.StatusNotFound)
+		http.NotFound(response, request)
 	}
 }
 
