@@ -5,6 +5,7 @@
 [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/tockins/fresh)
 [![AUR](https://img.shields.io/aur/license/yaourt.svg?style=flat-square)](https://raw.githubusercontent.com/tockins/fresh/v1/LICENSE)
 [![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/tockins/fresh-examples)
+
 Fresh is a lightweight GoLang web framework for RESTful API management.
 
 #### Wiki
@@ -18,7 +19,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
   - route group management 
   - filters
   - before and after handlers
-- Ready to use with Docker Image ([see here](https://hub.docker.com/r/tockins/fresh/))
+- Ready to use with Docker Image [see here](https://hub.docker.com/r/tockins/fresh)
 - Microservices architecture
 - DDD (Domain Driven Design) example
 - Cli commands to create project and logs
