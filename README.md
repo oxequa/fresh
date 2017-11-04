@@ -44,7 +44,7 @@ func main() {
 	f.Config().SetPort(8080)
 
 	// API definition with path and related controller
-	f.GET("/todo/", func(c fresh.Context) error{
+    f.GET("/todo/", func(c fresh.Context) error{
 	    return f.Response().JSON(http.StatusOK, nil)
 	})
     f.GET("/todo/:uuid", func(c fresh.Context) error{
