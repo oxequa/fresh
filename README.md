@@ -6,6 +6,13 @@
 [![AUR](https://img.shields.io/aur/license/yaourt.svg?style=flat-square)](https://raw.githubusercontent.com/tockins/fresh/v1/LICENSE)
 [![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/tockins/fresh-examples)
 
+
+<p align="center">
+    <img src="https://i.imgur.com/mCCF2br.png" width="300px">
+</p>
+
+#### About Fresh
+
 Fresh lightweight and high performance RESTful framework written in GoLang. Fresh aim to be ready to use for environments where scaling is needed.
 
 #### Content
@@ -23,11 +30,6 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 - Microservices architecture
 - DDD (Domain Driven Design) example
 - Cli commands to create project and logs
-
-<p align="center">
-<img src="https://i.imgur.com/mCCF2br.png" width="350px">
-</p>
-
 
 #### Getting Started
 
