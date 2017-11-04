@@ -40,10 +40,10 @@ To manage a simple GET API:
 
 ```
 func main() {
-	f := fresh.New()
-	f.Config().SetPort(8080)
+    f := fresh.New()
+    f.Config().SetPort(8080)
 
-	// API definition with path and related controller
+    // API definition with path and related controller
     f.GET("/todo/", func(c fresh.Context) error{
 	    return f.Response().JSON(http.StatusOK, nil)
 	})
@@ -52,7 +52,7 @@ func main() {
         res := map[string]interface{}{ "uuid": todoUuid}
         return f.Response().JSON(http.StatusOK, res)
      })
-	//Start Fresh Server
-	f.Run()
+    //Start Fresh Server
+    f.Run()
 }
 ```
