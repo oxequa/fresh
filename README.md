@@ -6,7 +6,7 @@
 [![AUR](https://img.shields.io/aur/license/yaourt.svg?style=flat-square)](https://raw.githubusercontent.com/tockins/fresh/v1/LICENSE)
 [![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/tockins/fresh-examples)
 
-Fresh is a lightweight GoLang web framework for RESTful API management.
+Fresh lightweight and high performance RESTful framework written in GoLang. Fresh aim to be ready to use for environments where scaling is needed.
 
 #### Wiki
 
