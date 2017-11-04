@@ -3,6 +3,8 @@ package fresh
 import (
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -35,7 +37,8 @@ type route struct {
 
 // Router struct
 type router struct {
-	route *route
+	route  *route
+	static map[string]string
 }
 
 // Resource struct
@@ -134,6 +137,12 @@ func (r *router) register(method string, path string, handler HandlerFunc) Handl
 	return route.add(method, handler)
 }
 
+// Register static routes for assets
+func (r *router) registerStatic(static map[string]string) Handler {
+	r.static = static
+	return nil
+}
+
 // Process a request
 func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request, context *context) (err error) {
 	context.init(request, response)
@@ -193,6 +202,9 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	context := &context{}
+	if r.ServeStatic(response, request) {
+		return
+	}
 	context.parameters = make(map[string]string)
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
 	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
@@ -207,6 +219,23 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	} else {
 		http.NotFound(response, request)
 	}
+}
+
+// Router main function. Find the matching route and call registered handlers.
+// TODO: support multiple default file
+func (r *router) ServeStatic(response http.ResponseWriter, request *http.Request) bool {
+	for publicPath, staticPath := range r.static {
+		path := strings.Replace(strings.Trim(request.URL.Path, "/"), publicPath, staticPath, 1)
+		path, _ = filepath.Abs(path)
+		if f, err := os.Stat(path); err == nil && !f.IsDir() {
+			http.ServeFile(response, request, path)
+			return true
+		} else if f, err := os.Stat(filepath.Join(path, "index.html")); err == nil && !f.IsDir() {
+			http.ServeFile(response, request, path)
+			return true
+		}
+	}
+	return false
 }
 
 // Scan the tree to find the matching route (if save create all needed routes)

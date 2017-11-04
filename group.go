@@ -63,8 +63,8 @@ func (g *group) OPTIONS(path string, handler HandlerFunc) Handler {
 }
 
 // ASSETS serve a list of static files. Array of files or directories TODO write logic
-func (g *group) ASSETS(assets map[string]string) {
-	g.parent.ASSETS(assets)
+func (g *group) STATIC(static map[string]string) {
+	g.parent.STATIC(static)
 }
 
 // After middleware

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -89,11 +88,12 @@ type (
 	fresh struct {
 		config *config
 		router *router
+		static map[string]string
 		server *http.Server
 	}
 
 	Rest interface {
-		ASSETS(map[string]string)
+		STATIC(map[string]string)
 		WS(string, HandlerFunc) Handler
 		GET(string, HandlerFunc) Handler
 		POST(string, HandlerFunc) Handler
@@ -124,7 +124,7 @@ func New() Fresh {
 	fresh := fresh{
 		config: new(config),
 		server: new(http.Server),
-		router: &router{&route{}},
+		router: &router{&route{}, make(map[string]string)},
 	}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
@@ -262,33 +262,8 @@ func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
 }
 
 // ASSETS serve a list of static files. Array of files or directories TODO write logic
-func (f *fresh) ASSETS(assets map[string]string) {
-	for index, asset := range assets {
-		handler := func(c Context) error {
-			var path string
-			var err error
-			w := c.Response().Get()
-			r := c.Request().Get()
-			ext := filepath.Ext(asset)
-			if ext != "" {
-				path, err = filepath.Abs(c.Request().URL().Path)
-			} else {
-				path = filepath.Join(asset, c.Request().URL().Path)
-				path, err = filepath.Abs(path)
-			}
-			if err != nil {
-				http.NotFound(w, r)
-				return nil
-			}
-			if f, err := os.Stat(path); err == nil && !f.IsDir() {
-				http.ServeFile(w, r, path)
-				return nil
-			}
-			http.NotFound(w, r)
-			return nil
-		}
-		f.router.register("STATIC", index, handler)
-	}
+func (f *fresh) STATIC(static map[string]string) {
+	f.router.registerStatic(static)
 }
 
 // Init set context request and response
