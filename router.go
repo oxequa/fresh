@@ -202,9 +202,6 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 // Router main function. Find the matching route and call registered handlers.
 func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	context := &context{}
-	if r.ServeStatic(response, request) {
-		return
-	}
 	context.parameters = make(map[string]string)
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
 	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
@@ -214,28 +211,28 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 				http.Error(response, err.Error(), http.StatusInternalServerError)
 			}
 		} else {
-			http.NotFound(response, request)
+			r.serveStatic(response, request)
 		}
 	} else {
-		http.NotFound(response, request)
+		r.serveStatic(response, request)
 	}
 }
 
 // Router main function. Find the matching route and call registered handlers.
-// TODO: support multiple default file
-func (r *router) ServeStatic(response http.ResponseWriter, request *http.Request) bool {
+func (r *router) serveStatic(response http.ResponseWriter, request *http.Request) {
 	for publicPath, staticPath := range r.static {
 		path := strings.Replace(strings.Trim(request.URL.Path, "/"), publicPath, staticPath, 1)
 		path, _ = filepath.Abs(path)
 		if f, err := os.Stat(path); err == nil && !f.IsDir() {
 			http.ServeFile(response, request, path)
-			return true
-		} else if f, err := os.Stat(filepath.Join(path, "index.html")); err == nil && !f.IsDir() {
-			http.ServeFile(response, request, path)
-			return true
+		} else if f.IsDir() {
+			// TODO: support multiple default file
+			if f, err := os.Stat(filepath.Join(path, "index.html")); err == nil && !f.IsDir() {
+				http.ServeFile(response, request, path)
+			}
 		}
 	}
-	return false
+	http.NotFound(response, request)
 }
 
 // Scan the tree to find the matching route (if save create all needed routes)
