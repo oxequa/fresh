@@ -14,7 +14,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 #### Features
 
 - RESTful API with:
-    - route group management 
+  - route group management 
   - filters
   - before and after handlers
 - Ready to use with Docker Image ([see here](https://hub.docker.com/r/tockins/fresh/))
@@ -29,7 +29,7 @@ Fresh is a lightweight GoLang web framework for RESTful API management.
 
 #### Getting Started
 
-Run this to get/install:
+Run this to get and install fresh:
 ```
 $ go get github.com/tockins/fresh
 ```
@@ -37,6 +37,7 @@ $ go get github.com/tockins/fresh
 ##### Examples
 
 To manage a simple GET API:
+
 ```
 func main() {
 	f := fresh.New()
