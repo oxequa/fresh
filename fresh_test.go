@@ -71,7 +71,7 @@ func setup() fresh {
 	f := fresh{
 		config: new(config),
 		server: new(http.Server),
-		router: &router{&route{}},
+		router: &router{&route{}, make(map[string] string)},
 	}
 	return f
 }
