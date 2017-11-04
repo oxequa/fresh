@@ -3,6 +3,7 @@
 [![Travis](https://img.shields.io/travis/tockins/fresh.svg?style=flat-square)](https://travis-ci.org/tockins/fresh)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tockins/fresh?style=flat-square)](https://goreportcard.com/report/github.com/tockins/fresh)
 [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/tockins/fresh)
+[![AUR](https://img.shields.io/aur/license/yaourt.svg?maxAge=2592000?style=flat-square)](https://raw.githubusercontent.com/tockins/fresh/v1/LICENSE)
 
 Fresh is a lightweight GoLang web framework for RESTful API management.
 
