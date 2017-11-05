@@ -18,6 +18,7 @@ type (
 	Config interface {
 		SetTSL() Config
 		SetPort(int) Config
+		SetGzip(Gzip) Config
 		SetDebug(bool) Config
 		SetHost(string) Config
 		SetLogger(bool) Config
@@ -33,7 +34,7 @@ type (
 		Logger  bool        `json:"logger,omitempty"`  // logger status
 		TSL     *tls.Config `json:"tsl,omitempty"`     // tsl status
 		Request *request    `json:"request,omitempty"` // request config
-		Gzip    *gzip       `json:"gzip,omitempty"`    // gzip config
+		Gzip    *Gzip       `json:"gzip,omitempty"`    // gzip config
 		CORS    *cors       `json:"cors,omitempty"`    // cors options
 	}
 
@@ -52,7 +53,7 @@ type (
 		Age         string `json:"age,omitempty"`
 	}
 
-	gzip struct {
+	Gzip struct {
 		Status  bool     `json:"status,omitempty"`
 		Level   int      `json:"level,omitempty"`
 		MinSize int      `json:"size,omitempty"`
@@ -90,6 +91,11 @@ func (c *config) SetTSL() Config {
 	c.server.TLSConfig = &tls.Config{
 		GetCertificate: certManager.GetCertificate,
 	}
+	return c
+}
+
+func (c *config) SetGzip(g Gzip) Config {
+	c.Gzip = &g
 	return c
 }
 
