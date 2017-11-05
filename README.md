@@ -8,7 +8,7 @@
 
 
 <p align="center">
-    <img src="https://i.imgur.com/mCCF2br.png" width="300px">
+    <img src="https://i.imgur.com/ogzKrn7.png" width="300px">
 </p>
 
 #### About Fresh
