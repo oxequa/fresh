@@ -208,7 +208,7 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
 			err := r.process(routeHandler, response, request, context)
 			if err != nil {
-				http.Error(response, err.Error(), http.StatusInternalServerError)
+				context.Response().writeErr(err)
 			}
 		} else {
 			r.serveStatic(response, request)
