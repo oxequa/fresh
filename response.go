@@ -13,6 +13,7 @@ type (
 		write()
 		writeErr(error)
 		Code(int) error
+		Type(content string)
 		Raw(int, string) error
 		Error(int, error) error
 		HTML(int, string) error
@@ -23,7 +24,6 @@ type (
 		Text(int, interface{}) error
 		JSON(int, interface{}) error
 		JSONP(int, string, interface{}) error
-		SetType(content string)
 		XMLFormat(int, interface{}, string) error
 		JSONFormat(int, interface{}, string) error
 		JSONPFormat(int, string, interface{}, string) error
