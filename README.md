@@ -19,6 +19,7 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 
 - [Features list](#features)
 - [Get Started](#get-started)
+- [Contribute](#contribute)
 
 #### Features
 
@@ -60,3 +61,7 @@ func main() {
     f.Run()
 }
 ```
+
+##### Contribute
+
+[See our guidelines](https://github.com/tockins/fresh/blob/master/CONTRIBUTING.md)
