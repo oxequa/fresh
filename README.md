@@ -18,7 +18,7 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 #### Content
 
 - [Features list](#features)
-- [Getting Started](#get-started)
+- [Get Started](#get-started)
 
 #### Features
 
