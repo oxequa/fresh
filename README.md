@@ -11,17 +11,17 @@
     <img src="https://i.imgur.com/ogzKrn7.png" width="300px">
 </p>
 
-#### About Fresh
+### About Fresh
 
 Fresh lightweight and high performance RESTful framework written in GoLang. Fresh aim to be ready to use for environments where scaling is needed.
 
-#### Content
+### Content
 
 - [Features list](#features)
 - [Get Started](#get-started)
 - [Contribute](#contribute)
 
-#### Features
+### Features
 
 - RESTful API with:
   - route group management 
@@ -32,14 +32,14 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 - DDD (Domain Driven Design) example
 - Cli commands to create project and logs
 
-#### Get Started
+### Get Started
 
 Run this to get and install fresh:
 ```
 $ go get github.com/tockins/fresh
 ```
 
-##### Examples
+### Examples
 
 To manage a simple GET API:
 
@@ -62,6 +62,6 @@ func main() {
 }
 ```
 
-##### Contribute
+### Contribute
 
 [See our guidelines](https://github.com/tockins/fresh/blob/master/CONTRIBUTING.md)
