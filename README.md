@@ -18,7 +18,7 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 #### Content
 
 - [Features list](#features)
-- [Getting Started](#getting-started)
+- [Getting Started](#get-started)
 
 #### Features
 
@@ -31,7 +31,7 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 - DDD (Domain Driven Design) example
 - Cli commands to create project and logs
 
-#### Getting Started
+#### Get Started
 
 Run this to get and install fresh:
 ```
