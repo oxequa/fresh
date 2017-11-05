@@ -53,8 +53,10 @@ type (
 	}
 
 	gzip struct {
-		Status bool `json:"status,omitempty"`
-		Level  int  `json:"level,omitempty"`
+		Status  bool     `json:"status,omitempty"`
+		Level   int      `json:"level,omitempty"`
+		MinSize int      `json:"size,omitempty"`
+		Types   []string `json:"types,omitempty"`
 	}
 )
 
