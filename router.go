@@ -229,7 +229,7 @@ func (r *router) serveStatic(response http.ResponseWriter, request *http.Request
 			http.ServeFile(response, request, path)
 			return
 		} else if f.IsDir() {
-			for _, testDefaultFile := range r.parent.config.staticDefault{
+			for _, testDefaultFile := range r.parent.config.staticDefault {
 				filePath := filepath.Join(path, testDefaultFile)
 				if f, err := os.Stat(filePath); err == nil && !f.IsDir() {
 					http.ServeFile(response, request, filePath)
