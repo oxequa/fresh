@@ -37,6 +37,7 @@ type route struct {
 
 // Router struct
 type router struct {
+	parent *fresh
 	route  *route
 	static map[string]string
 }
@@ -223,13 +224,19 @@ func (r *router) serveStatic(response http.ResponseWriter, request *http.Request
 	for publicPath, staticPath := range r.static {
 		path := strings.Replace(strings.Trim(request.URL.Path, "/"), publicPath, staticPath, 1)
 		path, _ = filepath.Abs(path)
-		if f, err := os.Stat(path); err == nil && !f.IsDir() {
+		f, err := os.Stat(path)
+		if err == nil && !f.IsDir() {
 			http.ServeFile(response, request, path)
+			return
 		} else if f.IsDir() {
-			// TODO: support multiple default file
-			if f, err := os.Stat(filepath.Join(path, "index.html")); err == nil && !f.IsDir() {
-				http.ServeFile(response, request, path)
+			for _, testDefaultFile := range r.parent.config.staticDefault{
+				filePath := filepath.Join(path, testDefaultFile)
+				if f, err := os.Stat(filePath); err == nil && !f.IsDir() {
+					http.ServeFile(response, request, filePath)
+					return
+				}
 			}
+
 		}
 	}
 	http.NotFound(response, request)

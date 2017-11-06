@@ -124,14 +124,14 @@ func New() Fresh {
 	fresh := fresh{
 		config: new(config),
 		server: new(http.Server),
-		router: &router{&route{}, make(map[string]string)},
 	}
+	fresh.router = &router{&fresh, &route{}, make(map[string]string)}
 	wd, _ := os.Getwd()
 	if fresh.config.read(wd) != nil {
 		// random port
 		rand.Seed(time.Now().Unix())
-		fresh.config.Host = "127.0.0.1"
-		fresh.config.Port = rand.Intn(9999-1111) + 1111
+		fresh.config.host = "127.0.0.1"
+		fresh.config.port = rand.Intn(9999-1111) + 1111
 	}
 	return &fresh
 }
@@ -139,17 +139,17 @@ func New() Fresh {
 // Run HTTP server
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
-	port := strconv.Itoa(f.config.Port)
+	port := strconv.Itoa(f.config.port)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	listener, err := net.Listen("tcp", f.config.Host+":"+port)
+	listener, err := net.Listen("tcp", f.config.host+":"+port)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
 	go func() {
-		log.Println("Server listen on", f.config.Host+":"+port)
+		log.Println("Server listen on", f.config.host+":"+port)
 		f.server.Handler = f.router
 		f.router.printRoutes()
 		// check for tsl before serve

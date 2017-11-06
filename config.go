@@ -16,26 +16,28 @@ const (
 
 type (
 	Config interface {
-		SetTSL() Config
-		SetPort(int) Config
-		SetGzip(Gzip) Config
-		SetDebug(bool) Config
-		SetHost(string) Config
-		SetLogger(bool) Config
-		SetCertTSL(string, string) Config
+		TSL() Config
+		Port(int) Config
+		Gzip(Gzip) Config
+		Debug(bool) Config
+		Host(string) Config
+		Logger(bool) Config
+		CertTSL(string, string) Config
+		StaticDefault([]string) Config
 	}
 
 	config struct {
 		*fresh
-		Logs    bool        `json:"logs,omitempty"`    // srv lead
-		Port    int         `json:"port,omitempty"`    // srv port
-		Host    string      `json:"host,omitempty"`    // srv host
-		Debug   bool        `json:"debug,omitempty"`   // debug status
-		Logger  bool        `json:"logger,omitempty"`  // logger status
-		TSL     *tls.Config `json:"tsl,omitempty"`     // tsl status
-		Request *request    `json:"request,omitempty"` // request config
-		Gzip    *Gzip       `json:"gzip,omitempty"`    // gzip config
-		CORS    *cors       `json:"cors,omitempty"`    // cors options
+		logs          bool        `json:"logs,omitempty"`           // srv lead
+		port          int         `json:"port,omitempty"`           // srv port
+		host          string      `json:"host,omitempty"`           // srv host
+		debug         bool        `json:"debug,omitempty"`          // debug status
+		logger        bool        `json:"logger,omitempty"`         // logger status
+		tsl           *tls.Config `json:"tsl,omitempty"`            // tsl status
+		request       *request    `json:"request,omitempty"`        // request config
+		gzip          *Gzip       `json:"gzip,omitempty"`           // gzip config
+		cors          *cors       `json:"cors,omitempty"`           // cors options
+		staticDefault []string    `json:"static_default,omitempty"` // default static files served
 	}
 
 	limits struct {
@@ -82,10 +84,10 @@ func (c *config) write(path string) error {
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
 }
 
-func (c *config) SetTSL() Config {
+func (c *config) TSL() Config {
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(c.Host),
+		HostPolicy: autocert.HostWhitelist(c.host),
 		Cache:      autocert.DirCache(".certs"), //folder for storing certificates
 	}
 	c.server.TLSConfig = &tls.Config{
@@ -94,33 +96,38 @@ func (c *config) SetTSL() Config {
 	return c
 }
 
-func (c *config) SetGzip(g Gzip) Config {
-	c.Gzip = &g
+func (c *config) Gzip(g Gzip) Config {
+	c.gzip = &g
 	return c
 }
 
-func (c *config) SetPort(port int) Config {
+func (c *config) Port(port int) Config {
 	// check if available
-	c.Port = port
+	c.port = port
 	return c
 }
 
-func (c *config) SetHost(host string) Config {
+func (c *config) Host(host string) Config {
 	// check if available
-	c.Host = host
+	c.host = host
 	return c
 }
 
-func (c *config) SetDebug(status bool) Config {
-	c.Debug = status
+func (c *config) Debug(status bool) Config {
+	c.debug = status
 	return c
 }
 
-func (c *config) SetLogger(status bool) Config {
-	c.Logger = status
+func (c *config) Logger(status bool) Config {
+	c.logger = status
 	return c
 }
 
-func (c *config) SetCertTSL(certFile, keyFile string) Config {
+func (c *config) CertTSL(certFile, keyFile string) Config {
+	return c
+}
+
+func (c *config) StaticDefault(staticDefault []string) Config {
+	c.staticDefault = staticDefault
 	return c
 }
