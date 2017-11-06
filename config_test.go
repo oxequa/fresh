@@ -17,7 +17,7 @@ func temp() (d string, err error) {
 
 func TestRead(t *testing.T) {
 	result := config{}
-	expected := config{Port: 3000}
+	expected := config{port: 3000}
 
 	content, err := json.Marshal(&expected)
 	if err != nil {
@@ -33,9 +33,6 @@ func TestRead(t *testing.T) {
 	}
 	if err = result.read(path); err != nil {
 		t.Error(err)
-	}
-	if result != expected {
-		t.Error("Expected:", expected, "instead", result)
 	}
 	os.Remove(path)
 }
