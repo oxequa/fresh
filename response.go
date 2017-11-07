@@ -11,7 +11,9 @@ import (
 type (
 	Response interface {
 		write()
+		get() reply
 		writeErr(error)
+		set(int, []byte)
 		Code(int) error
 		Type(content string)
 		Raw(int, string) error
@@ -29,7 +31,7 @@ type (
 		JSONPFormat(int, string, interface{}, string) error
 	}
 
-	Reply struct {
+	reply struct {
 		code     int
 		response []byte
 	}
@@ -38,7 +40,7 @@ type (
 		*context
 		w     http.ResponseWriter
 		r     *http.Request
-		reply Reply
+		reply reply
 	}
 )
 
@@ -48,6 +50,12 @@ func (r *response) write() {
 	r.w.Write(r.reply.response)
 }
 
+// Get response values
+func (r *response) get() reply {
+	return r.reply
+}
+
+// WriteErr response http error
 func (r *response) writeErr(err error) {
 	if r.reply.code == 0 {
 		http.Error(r.w, err.Error(), http.StatusInternalServerError)
@@ -65,7 +73,7 @@ func (r *response) check(content string) {
 
 // Set response values
 func (r *response) set(code int, response []byte) {
-	r.reply = Reply{code, response}
+	r.reply = reply{code, response}
 }
 
 // Http code response

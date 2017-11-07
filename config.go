@@ -118,20 +118,28 @@ func (c *config) Gzip(g Gzip) Config {
 	c.gzip = &g
 	// gzip handler
 	handler := func(context Context) error {
-		r := context.Request().Get()
-		w := context.Response().Get()
-		if c.config.gzip.Status {
-			if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
-				ct := r.Header.Get(ContentType)
-				if len(ct) == 0 || c.contains(ct, c.gzip.Types) {
-					// set header
-					w.Header().Set(ContentEncoding, MIMEGzip)
-					// del length if exist
-					w.Header().Del(ContentLength)
-					// new writer
-					gz := gzip.NewWriter(w)
-					defer gz.Close()
-					context.writer(Gzip{writer: gz, responseWriter: w})
+		reply := context.Response().get()
+		// check buffer length
+		if len(reply.response) >= c.gzip.MinSize {
+			r := context.Request().Get()
+			w := context.Response().Get()
+			if c.config.gzip.Status {
+				if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
+					ct := r.Header.Get(ContentType)
+					if len(ct) == 0 || c.contains(ct, c.gzip.Types) {
+						if len(ct) == 0 {
+							// detect content type by reading response
+							w.Header().Set(ContentType, http.DetectContentType(reply.response))
+						}
+						// set header
+						w.Header().Set(ContentEncoding, MIMEGzip)
+						// del length if exist
+						w.Header().Del(ContentLength)
+						// new writer
+						gz := gzip.NewWriter(w)
+						defer gz.Close()
+						context.writer(Gzip{writer: gz, responseWriter: w})
+					}
 				}
 			}
 		}
@@ -181,5 +189,6 @@ func (g Gzip) Header() http.Header {
 }
 
 func (g Gzip) Write(b []byte) (int, error) {
+	// check buffer
 	return g.writer.Write(b)
 }
