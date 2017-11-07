@@ -1,12 +1,16 @@
 package fresh
 
 import (
+	"compress/gzip"
 	"crypto/tls"
 	"encoding/json"
 	"golang.org/x/crypto/acme/autocert"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -28,16 +32,17 @@ type (
 
 	config struct {
 		*fresh
-		logs          bool        `json:"logs,omitempty"`           // srv lead
-		port          int         `json:"port,omitempty"`           // srv port
-		host          string      `json:"host,omitempty"`           // srv host
-		debug         bool        `json:"debug,omitempty"`          // debug status
-		logger        bool        `json:"logger,omitempty"`         // logger status
-		tsl           *tls.Config `json:"tsl,omitempty"`            // tsl status
-		request       *request    `json:"request,omitempty"`        // request config
-		gzip          *Gzip       `json:"gzip,omitempty"`           // gzip config
-		cors          *cors       `json:"cors,omitempty"`           // cors options
-		staticDefault []string    `json:"static_default,omitempty"` // default static files served
+		logs          bool          // srv lead
+		port          int           // srv port
+		host          string        // srv host
+		debug         bool          // debug status
+		logger        bool          // logger status
+		tsl           *tls.Config   // tsl status
+		request       *request      // request config
+		gzip          *Gzip         // gzip config
+		cors          *cors         // cors options
+		handlers      []HandlerFunc // handlers array
+		staticDefault []string      // default static files served
 	}
 
 	limits struct {
@@ -56,10 +61,12 @@ type (
 	}
 
 	Gzip struct {
-		Status  bool     `json:"status,omitempty"`
-		Level   int      `json:"level,omitempty"`
-		MinSize int      `json:"size,omitempty"`
-		Types   []string `json:"types,omitempty"`
+		writer         io.Writer
+		responseWriter http.ResponseWriter
+		Status         bool     `json:"status,omitempty"`
+		Level          int      `json:"level,omitempty"`
+		MinSize        int      `json:"size,omitempty"`
+		Types          []string `json:"types,omitempty"`
 	}
 )
 
@@ -84,6 +91,16 @@ func (c *config) write(path string) error {
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
 }
 
+func (c *config) contains(s string, arr []string) bool {
+	s = strings.ToLower(s)
+	for _, val := range arr {
+		if val == s {
+			return true
+		}
+	}
+	return false
+}
+
 func (c *config) TSL() Config {
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
@@ -97,7 +114,30 @@ func (c *config) TSL() Config {
 }
 
 func (c *config) Gzip(g Gzip) Config {
+	// set only value not nil or zero or not set
 	c.gzip = &g
+	// gzip handler
+	handler := func(context Context) error {
+		r := context.Request().Get()
+		w := context.Response().Get()
+		if c.config.gzip.Status {
+			if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
+				ct := r.Header.Get(ContentType)
+				if len(ct) == 0 || c.contains(ct, c.gzip.Types) {
+					// set header
+					w.Header().Set(ContentEncoding, MIMEGzip)
+					// del length if exist
+					w.Header().Del(ContentLength)
+					// new writer
+					gz := gzip.NewWriter(w)
+					defer gz.Close()
+					context.writer(Gzip{writer: gz, responseWriter: w})
+				}
+			}
+		}
+		return nil
+	}
+	c.handlers = append(c.handlers, handler)
 	return c
 }
 
@@ -130,4 +170,16 @@ func (c *config) CertTSL(certFile, keyFile string) Config {
 func (c *config) StaticDefault(staticDefault []string) Config {
 	c.staticDefault = staticDefault
 	return c
+}
+
+func (g Gzip) WriteHeader(i int) {
+	g.responseWriter.WriteHeader(i)
+}
+
+func (g Gzip) Header() http.Header {
+	return g.responseWriter.Header()
+}
+
+func (g Gzip) Write(b []byte) (int, error) {
+	return g.writer.Write(b)
 }

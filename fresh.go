@@ -25,6 +25,7 @@ const (
 	MIMETextHTML   = "text/html" + ";" + UTF8
 	MIMETextXML    = "text/xml" + ";" + UTF8
 	MIMEText       = "text/plain" + ";" + UTF8
+	MIMEGzip       = "gzip"
 )
 
 // Access
@@ -108,11 +109,12 @@ type (
 	Context interface {
 		Request() Request
 		Response() Response
+		writer(http.ResponseWriter)
 	}
 
 	context struct {
-		request    Request
-		response   Response
+		request    request
+		response   response
 		parameters map[string]string
 	}
 
@@ -268,17 +270,22 @@ func (f *fresh) STATIC(static map[string]string) {
 
 // Init set context request and response
 func (c *context) init(r *http.Request, w http.ResponseWriter) {
-	c.response = &response{w: w, r: r}
-	c.request = &request{r: r}
+	c.response = response{w: w, r: r}
+	c.request = request{r: r}
 	c.request.setURLParam(c.parameters)
+}
+
+// Overwrite http writer
+func (c *context) writer(w http.ResponseWriter) {
+	c.response.w = w
 }
 
 // Return context request
 func (c *context) Request() Request {
-	return c.request
+	return &c.request
 }
 
 // Return context response
 func (c *context) Response() Response {
-	return c.response
+	return &c.response
 }
