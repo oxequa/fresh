@@ -137,7 +137,7 @@ func (c *config) Gzip(g Gzip) Config {
 						w.Header().Del(ContentLength)
 						// new writer
 						gz := &gzip.Writer{}
-						if c.gzip.Level >= 1 && c.gzip.Level <= 9 {
+						if c.gzip.Level >= gzip.NoCompression && c.gzip.Level <= gzip.BestCompression {
 							gz, _ = gzip.NewWriterLevel(w, c.gzip.Level)
 						} else {
 							gz = gzip.NewWriter(w)
