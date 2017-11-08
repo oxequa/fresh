@@ -1,5 +1,7 @@
 # Fresh 
 
+[![Join the chat at https://gitter.im/tockins/fresh](https://badges.gitter.im/tockins/fresh.svg)](https://gitter.im/tockins/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Travis](https://img.shields.io/travis/tockins/fresh.svg?style=flat-square)](https://travis-ci.org/tockins/fresh)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tockins/fresh?style=flat-square)](https://goreportcard.com/report/github.com/tockins/fresh)
 [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/tockins/fresh)
