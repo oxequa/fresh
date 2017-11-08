@@ -136,7 +136,12 @@ func (c *config) Gzip(g Gzip) Config {
 						// del length if exist
 						w.Header().Del(ContentLength)
 						// new writer
-						gz := gzip.NewWriter(w)
+						gz := &gzip.Writer{}
+						if c.gzip.Level >= 1 && c.gzip.Level <= 9 {
+							gz, _ = gzip.NewWriterLevel(w, c.gzip.Level)
+						} else {
+							gz = gzip.NewWriter(w)
+						}
 						defer gz.Close()
 						context.writer(Gzip{writer: gz, responseWriter: w})
 					}
