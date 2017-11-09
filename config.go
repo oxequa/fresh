@@ -40,7 +40,7 @@ type (
 		tsl           *tls.Config   // tsl status
 		request       *request      // request config
 		gzip          *Gzip         // gzip config
-		cors          *cors         // cors options
+		cors          *CORS         // cors options
 		handlers      []HandlerFunc // handlers array
 		staticDefault []string      // default static files served
 	}
@@ -50,20 +50,18 @@ type (
 		HeaderLimit string `json:"header_limit,omitempty"`
 	}
 
-	cors struct {
-		Status      bool   `json:"status,omitempty"`
+	CORS struct {
 		Origins     string `json:"origins,omitempty"`
 		Headers     string `json:"headers,omitempty"`
 		Methods     string `json:"methods,omitempty"`
 		Credentials string `json:"credentials,omitempty"`
 		Expose      string `json:"expose,omitempty"`
-		Age         string `json:"age,omitempty"`
+		MaxAge      string `json:"maxage,omitempty"`
 	}
 
 	Gzip struct {
 		writer         io.Writer
 		responseWriter http.ResponseWriter
-		Status         bool     `json:"status,omitempty"`
 		Level          int      `json:"level,omitempty"`
 		MinSize        int      `json:"size,omitempty"`
 		Types          []string `json:"types,omitempty"`
@@ -123,34 +121,41 @@ func (c *config) Gzip(g Gzip) Config {
 		if len(reply.response) >= c.gzip.MinSize {
 			r := context.Request().Get()
 			w := context.Response().Get()
-			if c.config.gzip.Status {
-				if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
-					ct := r.Header.Get(ContentType)
-					if len(ct) == 0 || c.contains(ct, c.gzip.Types) {
-						if len(ct) == 0 {
-							// detect content type by reading response
-							w.Header().Set(ContentType, http.DetectContentType(reply.response))
-						}
-						// set header
-						w.Header().Set(ContentEncoding, MIMEGzip)
-						// del length if exist
-						w.Header().Del(ContentLength)
-						// new writer
-						gz := &gzip.Writer{}
-						defer gz.Close()
-						if c.gzip.Level >= gzip.NoCompression && c.gzip.Level <= gzip.BestCompression {
-							gz, _ = gzip.NewWriterLevel(w, c.gzip.Level)
-						} else {
-							gz = gzip.NewWriter(w)
-						}
-						context.writer(Gzip{writer: gz, responseWriter: w})
+			if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
+				ct := r.Header.Get(ContentType)
+				if len(ct) == 0 || c.contains(ct, c.gzip.Types) {
+					if len(ct) == 0 {
+						// detect content type by reading response
+						w.Header().Set(ContentType, http.DetectContentType(reply.response))
 					}
+					// set header
+					w.Header().Set(ContentEncoding, MIMEGzip)
+					// del length if exist
+					w.Header().Del(ContentLength)
+					// new writer
+					gz := &gzip.Writer{}
+					defer gz.Close()
+					if c.gzip.Level >= gzip.NoCompression && c.gzip.Level <= gzip.BestCompression {
+						gz, _ = gzip.NewWriterLevel(w, c.gzip.Level)
+					} else {
+						gz = gzip.NewWriter(w)
+					}
+					context.writer(Gzip{writer: gz, responseWriter: w})
 				}
 			}
 		}
 		return nil
 	}
 	c.handlers = append(c.handlers, handler)
+	return c
+}
+
+func (c *config) CORS(s CORS) Config {
+	c.cors = &s
+	// cors handler
+	//handler := func(context Context) error {
+	//	return nil
+	//}
 	return c
 }
 
