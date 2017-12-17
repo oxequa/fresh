@@ -78,19 +78,17 @@ const (
 
 // Main Fresh structure
 type (
-	Fresh interface {
-		Rest
-		Run() error
-		Shutdown() error
-		Config() Config
-		Group(string) Group
-	}
-
 	fresh struct {
 		config *config
 		router *router
 		static map[string]string
 		server *http.Server
+	}
+
+	context struct {
+		request    request
+		response   response
+		parameters map[string]string
 	}
 
 	Rest interface {
@@ -106,16 +104,18 @@ type (
 		CRUD(string, ...HandlerFunc) Resource
 	}
 
+	Fresh interface {
+		Rest
+		Run() error
+		Shutdown() error
+		Config() Config
+		Group(string) Group
+	}
+
 	Context interface {
 		Request() Request
 		Response() Response
 		Writer(http.ResponseWriter)
-	}
-
-	context struct {
-		request    request
-		response   response
-		parameters map[string]string
 	}
 
 	HandlerFunc func(Context) error
