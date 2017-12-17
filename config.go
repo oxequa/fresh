@@ -19,17 +19,6 @@ const (
 )
 
 type (
-	Config interface {
-		TSL() Config
-		Port(int) Config
-		Gzip(Gzip) Config
-		Debug(bool) Config
-		Host(string) Config
-		Logger(bool) Config
-		CertTSL(string, string) Config
-		StaticDefault([]string) Config
-	}
-
 	config struct {
 		*fresh
 		logs          bool          // srv lead
@@ -50,6 +39,15 @@ type (
 		HeaderLimit string `json:"header_limit,omitempty"`
 	}
 
+	Gzip struct {
+		writer         io.Writer
+		responseWriter http.ResponseWriter
+		Level          int      `json:"level,omitempty"`
+		MinSize        int      `json:"size,omitempty"`
+		Types          []string `json:"types,omitempty"`
+		Filter         Filter
+	}
+
 	CORS struct {
 		Origins     string `json:"origins,omitempty"`
 		Headers     string `json:"headers,omitempty"`
@@ -57,15 +55,21 @@ type (
 		Credentials string `json:"credentials,omitempty"`
 		Expose      string `json:"expose,omitempty"`
 		MaxAge      string `json:"maxage,omitempty"`
+		Filter      Filter
 	}
 
-	Gzip struct {
-		writer         io.Writer
-		responseWriter http.ResponseWriter
-		Level          int      `json:"level,omitempty"`
-		MinSize        int      `json:"size,omitempty"`
-		Types          []string `json:"types,omitempty"`
+	Config interface {
+		TSL() Config
+		Port(int) Config
+		Gzip(Gzip) Config
+		Debug(bool) Config
+		Host(string) Config
+		Logger(bool) Config
+		CertTSL(string, string) Config
+		StaticDefault([]string) Config
 	}
+
+	Filter func(Context) bool
 )
 
 func (c *config) read(path string) error {
@@ -87,6 +91,11 @@ func (c *config) write(path string) error {
 		}
 	}
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
+}
+
+func (c *config) append(handler HandlerFunc) Config {
+	c.handlers = append(c.handlers, handler)
+	return c
 }
 
 func (c *config) contains(s string, arr []string) bool {
@@ -150,17 +159,16 @@ func (c *config) Gzip(g Gzip) Config {
 		}
 		return nil
 	}
-	c.handlers = append(c.handlers, handler)
-	return c
+	return c.append(handler)
 }
 
 func (c *config) CORS(s CORS) Config {
 	c.cors = &s
 	// cors handler
-	//handler := func(context Context) error {
-	//	return nil
-	//}
-	return c
+	handler := func(context Context) error {
+		return nil
+	}
+	return c.append(handler)
 }
 
 func (c *config) Port(port int) Config {
