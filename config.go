@@ -49,12 +49,12 @@ type (
 	}
 
 	CORS struct {
-		Origins     string `json:"origins,omitempty"`
-		Headers     string `json:"headers,omitempty"`
-		Methods     string `json:"methods,omitempty"`
-		Credentials string `json:"credentials,omitempty"`
-		Expose      string `json:"expose,omitempty"`
-		MaxAge      string `json:"maxage,omitempty"`
+		Origins     []string `json:"origins,omitempty"`
+		Headers     []string `json:"headers,omitempty"`
+		Methods     []string `json:"methods,omitempty"`
+		Expose      []string `json:"expose,omitempty"`
+		MaxAge      int      `json:"maxage,omitempty"`
+		Credentials bool     `json:"credentials,omitempty"`
 		Filter      Filter
 	}
 
@@ -166,6 +166,15 @@ func (c *config) CORS(s CORS) Config {
 	c.cors = &s
 	// cors handler
 	handler := func(context Context) error {
+		//r := context.Request().Get()
+		//w := context.Response().Get()
+		// Allow origins
+		if len(c.cors.Origins) > 0 {
+
+		}
+		// Allowed headers
+		if len(c.cors.Headers) == 0 {
+		}
 		return nil
 	}
 	return c.append(handler)
