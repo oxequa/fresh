@@ -109,7 +109,7 @@ type (
 	Context interface {
 		Request() Request
 		Response() Response
-		writer(http.ResponseWriter)
+		Writer(http.ResponseWriter)
 	}
 
 	context struct {
@@ -276,7 +276,7 @@ func (c *context) init(r *http.Request, w http.ResponseWriter) {
 }
 
 // Overwrite http writer
-func (c *context) writer(w http.ResponseWriter) {
+func (c *context) Writer(w http.ResponseWriter) {
 	c.response.w = w
 }
 

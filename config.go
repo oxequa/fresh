@@ -115,7 +115,7 @@ func (c *config) Gzip(g Gzip) Config {
 	// set only value not nil or zero or not set
 	c.gzip = &g
 	// gzip handler
-	handler := func(context Context) error {
+	handler := func(context Context) (err error) {
 		reply := context.Response().get()
 		// check buffer length
 		if len(reply.response) >= c.gzip.MinSize {
@@ -136,11 +136,15 @@ func (c *config) Gzip(g Gzip) Config {
 					gz := &gzip.Writer{}
 					defer gz.Close()
 					if c.gzip.Level >= gzip.NoCompression && c.gzip.Level <= gzip.BestCompression {
-						gz, _ = gzip.NewWriterLevel(w, c.gzip.Level)
+						gz, err = gzip.NewWriterLevel(w, c.gzip.Level)
+						if err != nil {
+							context.Writer(w)
+							return err
+						}
 					} else {
 						gz = gzip.NewWriter(w)
 					}
-					context.writer(Gzip{writer: gz, responseWriter: w})
+					context.Writer(Gzip{writer: gz, responseWriter: w})
 				}
 			}
 		}
