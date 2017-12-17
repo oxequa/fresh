@@ -169,11 +169,34 @@ func (c *config) CORS(s CORS) Config {
 		//r := context.Request().Get()
 		//w := context.Response().Get()
 		// Allow origins
-		if len(c.cors.Origins) > 0 {
+		if len(c.cors.Origins) == 0 {
+
+		} else {
 
 		}
 		// Allowed headers
 		if len(c.cors.Headers) == 0 {
+
+		} else {
+
+		}
+		// Allowed Methods
+		if len(c.cors.Methods) == 0 {
+
+		} else {
+
+		}
+		// Allow credentials
+		if c.cors.Credentials {
+
+		}
+		// Expose headers
+		if len(c.cors.Expose) > 0 {
+
+		}
+		// Max age
+		if c.cors.MaxAge > 0 {
+
 		}
 		return nil
 	}
