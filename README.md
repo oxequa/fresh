@@ -28,7 +28,6 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
   - route group management 
   - filters
   - before and after handlers
-- Ready to use with Docker Image ([see here](https://hub.docker.com/r/tockins/fresh))
 - Microservices architecture
 - DDD (Domain Driven Design) example
 - Cli commands to create project and logs
