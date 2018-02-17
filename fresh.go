@@ -83,6 +83,7 @@ type (
 		router *router
 		static map[string]string
 		server *http.Server
+		*utils
 	}
 
 	context struct {
@@ -110,6 +111,7 @@ type (
 		Shutdown() error
 		Config() Config
 		Group(string) Group
+		Utils
 	}
 
 	Context interface {
@@ -126,6 +128,7 @@ func New() Fresh {
 	fresh := fresh{
 		config: new(config),
 		server: new(http.Server),
+		utils:  &utils{dto_tag: "dto"},
 	}
 	fresh.router = &router{&fresh, &route{}, make(map[string]string)}
 	wd, _ := os.Getwd()
