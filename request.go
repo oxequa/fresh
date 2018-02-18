@@ -17,7 +17,7 @@ type (
 		IsTSL() bool
 		URL() *url.URL
 		Method() string
-		Map(interface{})
+		Map(interface{}) interface{}
 		Form() url.Values
 		Get() *http.Request
 		WS() *websocket.Conn
@@ -67,12 +67,13 @@ func (req *request) Form() url.Values {
 }
 
 // Get the body mapped to an interface from a application/json request
-func (req *request) Map(i interface{}) {
+func (req *request) Map(i interface{}) interface{} {
 	err := json.NewDecoder(req.r.Body).Decode(i)
 	if err != nil {
-		return
+		return nil
 	}
 	// TODO: handle errors
+	return i
 }
 
 // Request return current http request
