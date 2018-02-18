@@ -1,6 +1,7 @@
 package fresh
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 )
@@ -8,7 +9,7 @@ import (
 type (
 	Utils interface {
 		RegisterDTO(interface{}, interface{})
-		MapDTO(interface{}) interface{}
+		MapDTO(interface{}) (interface{}, error)
 	}
 
 	utils struct {
@@ -25,7 +26,7 @@ func (u *utils) RegisterDTO(m interface{}, d interface{}) {
 	u.dr[reflect.TypeOf(d).String()] = reflect.TypeOf(d)
 }
 
-func (u *utils) MapDTO(model interface{}) interface{} {
+func (u *utils) MapDTO(model interface{}) (interface{}, error) {
 	fields := make(map[string]reflect.Value)
 	v := reflect.ValueOf(model)
 	for i := 0; i < v.NumField(); i++ {
@@ -43,6 +44,9 @@ func (u *utils) MapDTO(model interface{}) interface{} {
 	} else {
 		modelName = modelName + strings.ToUpper(u.dto_tag)
 	}
+	if _, ok := u.dr[modelName]; ok == false {
+		return nil, errors.New("unable to find " + u.dto_tag + " mapping")
+	}
 	val := reflect.New(u.dr[modelName]).Elem()
 	for i := 0; i < val.NumField(); i++ {
 		fieldInfo := val.Type().Field(i)
@@ -55,5 +59,5 @@ func (u *utils) MapDTO(model interface{}) interface{} {
 			}
 		}
 	}
-	return val.Interface()
+	return val.Interface(), nil
 }
