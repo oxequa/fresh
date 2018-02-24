@@ -1,11 +1,11 @@
 # Fresh 
 
-[![Travis](https://img.shields.io/travis/tockins/fresh.svg?style=flat-square)](https://travis-ci.org/tockins/fresh)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tockins/fresh?style=flat-square)](https://goreportcard.com/report/github.com/tockins/fresh)
-[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/tockins/fresh)
-[![AUR](https://img.shields.io/aur/license/yaourt.svg?style=flat-square)](https://raw.githubusercontent.com/tockins/fresh/v1/LICENSE)
-[![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/tockins/fresh-examples)
-[![Gitter](https://img.shields.io/gitter/room/tockins/fresh.svg?style=flat-square)](https://gitter.im/tockins/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Travis](https://img.shields.io/travis/oxequa/fresh.svg?style=flat-square)](https://travis-ci.org/oxequa/fresh)
+[![Go Report Card](https://goreportcard.com/badge/github.com/oxequa/fresh?style=flat-square)](https://goreportcard.com/report/github.com/oxequa/fresh)
+[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/oxequa/fresh)
+[![AUR](https://img.shields.io/aur/license/yaourt.svg?style=flat-square)](https://raw.githubusercontent.com/oxequa/fresh/v1/LICENSE)
+[![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/oxequa/fresh-examples)
+[![Gitter](https://img.shields.io/gitter/room/oxequa/fresh.svg?style=flat-square)](https://gitter.im/oxequa/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 
 <p align="center">
@@ -36,7 +36,7 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 
 Run this to get and install fresh:
 ```
-$ go get github.com/tockins/fresh
+$ go get github.com/oxequa/fresh
 ```
 
 ### Examples
@@ -64,4 +64,4 @@ func main() {
 
 ### Contribute
 
-[See our guidelines](https://github.com/tockins/fresh/blob/master/CONTRIBUTING.md)
+[See our guidelines](https://github.com/oxequa/fresh/blob/master/CONTRIBUTING.md)
