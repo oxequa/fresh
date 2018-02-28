@@ -1,4 +1,4 @@
-# Fresh 
+# Fresh
 
 [![Travis](https://img.shields.io/travis/oxequa/fresh.svg?style=flat-square)](https://travis-ci.org/oxequa/fresh)
 [![Go Report Card](https://goreportcard.com/badge/github.com/oxequa/fresh?style=flat-square)](https://goreportcard.com/report/github.com/oxequa/fresh)
@@ -9,7 +9,7 @@
 
 
 <p align="center">
-    <img src="https://i.imgur.com/ogzKrn7.png" width="300px">
+    <img src="https://i.imgur.com/K9C4VGj.png" width="300px">
 </p>
 
 ### About Fresh
@@ -25,7 +25,7 @@ Fresh lightweight and high performance RESTful framework written in GoLang. Fres
 ### Features
 
 - RESTful API with:
-  - route group management 
+  - route group management
   - filters
   - before and after handlers
 - Microservices architecture
