@@ -7,14 +7,13 @@
 [![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/oxequa/fresh-examples)
 [![Gitter](https://img.shields.io/gitter/room/oxequa/fresh.svg?style=flat-square)](https://gitter.im/oxequa/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+<br>
 
-<p align="center">
-    <img src="https://i.imgur.com/K9C4VGj.png" width="300px">
-</p>
-
-### About Fresh
-
-Fresh lightweight and high performance RESTful framework written in GoLang. Fresh aim to be ready to use for environments where scaling is needed.
+<div align="center">
+    <img src="https://i.imgur.com/K9C4VGj.png" width="125px">
+    <h1 style="">The Golang RESTful framework</h1>
+	<p style="font-size: 18px; font-weight: 400;">Fresh is a lightweight RESTful framework build on top of the best dev patterns.</p>
+</div>
 
 ### Content
 
