@@ -1,66 +1,31 @@
-# Fresh
+<p align="center">
+  <img src="https://i.imgur.com/K9C4VGj.png" width="125px">
+</p>
+<p align="center">
+  <a href="https://travis-ci.org/oxequa/fresh"><img src="https://img.shields.io/travis/oxequa/fresh.svg?style=flat-square" alt="Build status"></a>
+  <a href="https://goreportcard.com/report/github.com/oxequa/fresh"><img src="https://goreportcard.com/badge/github.com/oxequa/fresh?style=flat-square" alt="GoReport"></a>
+  <a href="http://godoc.org/github.com/oxequa/fresh"><img src="http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square" alt="GoDoc"></a>
+  <a href="https://raw.githubusercontent.com/oxequa/fresh/v1/LICENSE"><img src="https://img.shields.io/aur/license/yaourt.svg?style=flat-square" alt="License"></a>
+  <a href="https://gitter.im/oxequa/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://img.shields.io/gitter/room/oxequa/fresh.svg?style=flat-square" alt="Gitter"></a>
+</p>
+<hr>
+<h3 align="center">RESTful framework build on top of the best dev patterns</h3>
+<hr>
 
-[![Travis](https://img.shields.io/travis/oxequa/fresh.svg?style=flat-square)](https://travis-ci.org/oxequa/fresh)
-[![Go Report Card](https://goreportcard.com/badge/github.com/oxequa/fresh?style=flat-square)](https://goreportcard.com/report/github.com/oxequa/fresh)
-[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/oxequa/fresh)
-[![AUR](https://img.shields.io/aur/license/yaourt.svg?style=flat-square)](https://raw.githubusercontent.com/oxequa/fresh/v1/LICENSE)
-[![](https://img.shields.io/badge/fresh-examples-yellow.svg?style=flat-square)](https://github.com/oxequa/fresh-examples)
-[![Gitter](https://img.shields.io/gitter/room/oxequa/fresh.svg?style=flat-square)](https://gitter.im/oxequa/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-<br>
-
-<div align="center">
-    <img src="https://i.imgur.com/K9C4VGj.png" width="125px">
-    <h1 style="">The Golang RESTful framework</h1>
-	<p style="font-size: 18px; font-weight: 400;">Fresh is a lightweight RESTful framework build on top of the best dev patterns.</p>
-</div>
-
-### Content
-
-- [Features list](#features)
-- [Get Started](#get-started)
-- [Contribute](#contribute)
-
-### Features
-
-- RESTful API with:
-  - route group management
-  - filters
-  - before and after handlers
-- Microservices architecture
-- DDD (Domain Driven Design) example
-- Cli commands to create project and logs
-
-### Get Started
-
-Run this to get and install fresh:
-```
-$ go get github.com/oxequa/fresh
-```
-
-### Examples
-
-To manage a simple GET API:
+## Quickstart
 
 ```
-func main() {
-    f := fresh.New()
-    f.Config().Port(8080)
-
-    // API definition with path and related controller
-    f.GET("/todo/", func(c fresh.Context) error{
-	    return c.Response().JSON(http.StatusOK, nil)
-	})
-    f.GET("/todo/:uuid", func(c fresh.Context) error{
-        todoUuid := c.Request().URLParam("uuid")
-        res := map[string]interface{}{ "uuid": todoUuid}
-        return c.Response().JSON(http.StatusOK, res)
-     })
-    //Start Fresh Server
-    f.Run()
-}
+go get github.com/oxequa/fresh
 ```
 
-### Contribute
+## Documentation
 
-[See our guidelines](https://github.com/oxequa/fresh/blob/master/CONTRIBUTING.md)
+You can read the full documentation of Fresh here.
+
+## Contributing
+
+Please read our guideline [here](CONTRIBUTING.md)
+
+## License
+
+Fresh is licensed under the [GNU GENERAL PUBLIC LICENSE V3](LICENSE)
