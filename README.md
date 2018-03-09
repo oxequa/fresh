@@ -24,8 +24,8 @@ You can read the full documentation of Fresh here.
 
 ## Contributing
 
-Please read our guideline [here](CONTRIBUTING.md)
+Please read our guideline [here](CONTRIBUTING.md).
 
 ## License
 
-Fresh is licensed under the [GNU GENERAL PUBLIC LICENSE V3](LICENSE)
+Fresh is licensed under the [GNU GENERAL PUBLIC LICENSE V3](LICENSE).
