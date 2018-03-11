@@ -2,7 +2,6 @@ package fresh
 
 import (
 	httpContext "context"
-	"golang.org/x/net/websocket"
 	"log"
 	"math/rand"
 	"net"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 // MIME types
@@ -107,6 +108,7 @@ type (
 	Fresh interface {
 		Rest
 		Run() error
+		RunAndShutdown(func() error) error
 		Shutdown() error
 		Config() Config
 		Group(string) Group
@@ -158,11 +160,14 @@ func (f *fresh) Run() error {
 		f.server.Serve(listener)
 	}()
 	<-shutdown
-	log.Println("Server shutdown")
-	ctx, cancel := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
-	f.server.Shutdown(ctx)
-	cancel()
+	f.Shutdown()
 	return nil
+}
+
+func (f *fresh) RunAndShutdown(callback func() error) error {
+	f.Run()
+	err := callback()
+	return err
 }
 
 // Config interface
@@ -175,8 +180,8 @@ func (f *fresh) Shutdown() error {
 	ctx, cancel := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
 	f.server.Shutdown(ctx)
 	cancel()
+	log.Println("Server shutdown")
 	return nil
-
 }
 
 // Group registration
