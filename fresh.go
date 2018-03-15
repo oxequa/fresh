@@ -164,12 +164,6 @@ func (f *fresh) Run() error {
 	return nil
 }
 
-func (f *fresh) RunAndShutdown(callback func() error) error {
-	f.Run()
-	err := callback()
-	return err
-}
-
 // Config interface
 func (f *fresh) Config() Config {
 	return f.config
