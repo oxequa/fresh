@@ -21,9 +21,9 @@ const (
 type (
 	config struct {
 		*fresh
-		logs          bool          // srv lead
 		port          int           // srv port
 		host          string        // srv host
+		logs          bool          // srv lead
 		debug         bool          // debug status
 		logger        bool          // logger status
 		tsl           *tls.Config   // tsl status
