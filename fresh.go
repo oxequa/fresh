@@ -108,7 +108,6 @@ type (
 	Fresh interface {
 		Rest
 		Run() error
-		RunAndShutdown(func() error) error
 		Shutdown() error
 		Config() Config
 		Group(string) Group
