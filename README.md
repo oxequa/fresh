@@ -9,7 +9,7 @@
   <a href="https://gitter.im/oxequa/fresh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://img.shields.io/gitter/room/oxequa/fresh.svg?style=flat-square" alt="Gitter"></a>
 </p>
 <hr>
-<h3 align="center">RESTful framework build on top of the best dev patterns</h3>
+<h3 align="center">RESTful framework built on top of the best dev patterns</h3>
 <hr>
 
 ## Quickstart
