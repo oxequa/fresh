@@ -168,7 +168,6 @@ func (c *config) CORS(s CORS) Config {
 	c.cors = &s
 	// cors handler
 	handler := func(context Context) error {
-		//r := context.Request().Get()
 		w := context.Response().Get()
 		// Allow origins
 		if len(c.cors.Origins) > 0 {
@@ -183,9 +182,7 @@ func (c *config) CORS(s CORS) Config {
 		}
 		// Allowed Methods
 		if len(c.cors.Methods) > 0 {
-			for _, h := range c.cors.Methods {
-				w.Header().Set(AccessControlAllowMethods, h)
-			}
+			w.Header().Set(AccessControlAllowMethods, strings.Join(c.cors.Methods[:], ","))
 		}
 		// Allow credentials
 		if c.cors.Credentials {
@@ -193,11 +190,7 @@ func (c *config) CORS(s CORS) Config {
 		}
 		// Expose headers
 		if len(c.cors.Expose) > 0 {
-			if len(c.cors.Expose) > 0 {
-				for _, h := range c.cors.Expose {
-					w.Header().Set(AccessControlExposes, h)
-				}
-			}
+			w.Header().Set(AccessControlExposes, strings.Join(c.cors.Expose[:], ","))
 		}
 		// Max age
 		if c.cors.MaxAge > 0 {
