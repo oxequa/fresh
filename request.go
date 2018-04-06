@@ -2,16 +2,17 @@ package fresh
 
 import (
 	"encoding/json"
-	"golang.org/x/net/websocket"
 	"io"
 	"net/http"
 	"net/url"
+
+	"golang.org/x/net/websocket"
 )
 
 // Request structure
 type (
 	Request interface {
-		setURLParam(map[string]string)
+		setRouteParam(map[string]string)
 
 		IsWS() bool
 		IsTSL() bool
@@ -24,7 +25,7 @@ type (
 		Body() io.ReadCloser
 		QueryString() string
 		SetWS(*websocket.Conn)
-		URLParam(string) string
+		RouteParam(string) string
 		FormValue(string) string
 		QueryParam(string) string
 
@@ -105,7 +106,7 @@ func (req *request) SetWS(ws *websocket.Conn) {
 }
 
 // Get a URL parameter
-func (req *request) URLParam(k string) string {
+func (req *request) RouteParam(k string) string {
 	return req.p[k]
 }
 
@@ -120,6 +121,6 @@ func (req *request) QueryParam(k string) string {
 }
 
 // Set URL parameters
-func (req *request) setURLParam(m map[string]string) {
+func (req *request) setRouteParam(m map[string]string) {
 	req.p = m
 }

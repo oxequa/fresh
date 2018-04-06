@@ -4,13 +4,15 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	"encoding/json"
-	"golang.org/x/crypto/acme/autocert"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -50,7 +52,6 @@ type (
 
 	CORS struct {
 		Origins     []string `json:"origins,omitempty"`
-		Headers     []string `json:"headers,omitempty"`
 		Methods     []string `json:"methods,omitempty"`
 		Expose      []string `json:"expose,omitempty"`
 		MaxAge      int      `json:"maxage,omitempty"`
@@ -61,6 +62,7 @@ type (
 	Config interface {
 		TSL() Config
 		Port(int) Config
+		CORS(CORS) Config
 		Gzip(Gzip) Config
 		Debug(bool) Config
 		Host(string) Config
@@ -167,36 +169,39 @@ func (c *config) CORS(s CORS) Config {
 	// cors handler
 	handler := func(context Context) error {
 		//r := context.Request().Get()
-		//w := context.Response().Get()
+		w := context.Response().Get()
 		// Allow origins
-		if len(c.cors.Origins) == 0 {
-
-		} else {
-
-		}
-		// Allowed headers
-		if len(c.cors.Headers) == 0 {
-
-		} else {
-
+		if len(c.cors.Origins) > 0 {
+			for _, h := range c.cors.Origins {
+				if h == "*" {
+					w.Header().Set(AccessControlAllowOrigin, h)
+					break
+				} else if h == context.Request().Get().Header.Get("Origin") {
+					w.Header().Set(AccessControlAllowOrigin, h)
+				}
+			}
 		}
 		// Allowed Methods
-		if len(c.cors.Methods) == 0 {
-
-		} else {
-
+		if len(c.cors.Methods) > 0 {
+			for _, h := range c.cors.Methods {
+				w.Header().Set(AccessControlAllowMethods, h)
+			}
 		}
 		// Allow credentials
 		if c.cors.Credentials {
-
+			w.Header().Set(AccessControlAllowCredentials, "true")
 		}
 		// Expose headers
 		if len(c.cors.Expose) > 0 {
-
+			if len(c.cors.Expose) > 0 {
+				for _, h := range c.cors.Expose {
+					w.Header().Set(AccessControlExposes, h)
+				}
+			}
 		}
 		// Max age
 		if c.cors.MaxAge > 0 {
-
+			w.Header().Set(AccessControlMaxAge, strconv.Itoa(c.cors.MaxAge))
 		}
 		return nil
 	}

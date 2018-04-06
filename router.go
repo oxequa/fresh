@@ -159,6 +159,13 @@ func (r *router) process(handler *handler, response http.ResponseWriter, request
 	if err = handler.middleware(context, handler.after...); err != nil {
 		return err
 	}
+
+	for _, ch := range r.parent.config.handlers {
+		err := ch(context)
+		if err != nil {
+			return err
+		}
+	}
 	// write response
 	context.response.write()
 	return
