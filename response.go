@@ -101,17 +101,17 @@ func (r *response) Raw(c int, i string) error {
 	return nil
 }
 
-// HTTP error
-func (r *response) Error(c int, err error) error {
-	r.set(c, nil)
-	return err
-}
-
 // HTML response
 func (r *response) HTML(c int, i string) error {
 	r.check(MIMETextHTML)
 	r.set(c, []byte(i))
 	return nil
+}
+
+// HTTP error
+func (r *response) Error(c int, err error) error {
+	r.set(c, nil)
+	return err
 }
 
 // File response, may be used to display a file
@@ -172,6 +172,12 @@ func (r *response) Text(c int, i interface{}) error {
 	return nil
 }
 
+// Custom Header
+func (r *response) Header(key, value string) Response {
+	r.w.Header().Add(key, value)
+	return r
+}
+
 // Download response, force the browser to download a file
 func (r *response) Download(c int, path string) error {
 	// check if exist
@@ -203,12 +209,6 @@ func (r *response) Redirect(c int, link string) error {
 	r.w.Header().Set(Location, link)
 	r.w.WriteHeader(c)
 	return nil
-}
-
-// Custom Header
-func (r *response) Header(key, value string) Response {
-	r.w.Header().Add(key, value)
-	return r
 }
 
 // JSON response
