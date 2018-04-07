@@ -3,7 +3,6 @@ package fresh
 import (
 	"compress/gzip"
 	"crypto/tls"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,21 +10,21 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
 	"golang.org/x/crypto/acme/autocert"
+	"gopkg.in/yaml.v2"
 )
 
 const (
-	file = "fresh.json"
+	file = "fresh.yaml"
 	perm = 0770
 )
 
 type (
 	config struct {
 		*fresh
-		port          int           // srv port
-		host          string        // srv host
-		logs          bool          // srv lead
+		port          int           // server port
+		host          string        // server host
+		logs          bool          // server lead
 		debug         bool          // debug status
 		logger        bool          // logger status
 		tsl           *tls.Config   // tsl status
@@ -38,30 +37,30 @@ type (
 	}
 
 	Limit struct {
-		BodyLimit   string `json:"body_limit,omitempty"`
-		HeaderLimit string `json:"header_limit,omitempty"`
+		BodyLimit   string `yaml:"body_limit,omitempty"`
+		HeaderLimit string `yaml:"header_limit,omitempty"`
 	}
 
 	Dispatch struct {
-		Option bool `json:"option,omitempty"`
-		Trace  bool `json:"trace,omitempty"`
+		Option bool `yaml:"option,omitempty"`
+		Trace  bool `yaml:"trace,omitempty"`
 	}
 
 	Gzip struct {
 		writer         io.Writer
 		responseWriter http.ResponseWriter
-		Level          int      `json:"level,omitempty"`
-		MinSize        int      `json:"size,omitempty"`
-		Types          []string `json:"types,omitempty"`
+		Level          int      `yaml:"level,omitempty"`
+		MinSize        int      `yaml:"size,omitempty"`
+		Types          []string `yaml:"types,omitempty"`
 		Filter         Filter
 	}
 
 	CORS struct {
-		Origins     []string `json:"origins,omitempty"`
-		Methods     []string `json:"methods,omitempty"`
-		Expose      []string `json:"expose,omitempty"`
-		MaxAge      int      `json:"maxage,omitempty"`
-		Credentials bool     `json:"credentials,omitempty"`
+		Origins     []string `yaml:"origins,omitempty"`
+		Methods     []string `yaml:"methods,omitempty"`
+		Expose      []string `yaml:"expose,omitempty"`
+		MaxAge      int      `yaml:"maxage,omitempty"`
+		Credentials bool     `yaml:"credentials,omitempty"`
 		Filter      Filter
 	}
 
@@ -86,11 +85,11 @@ func (c *config) read(path string) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(content, &c)
+	return yaml.Unmarshal(content, &c)
 }
 
 func (c *config) write(path string) error {
-	content, err := json.MarshalIndent(c, "", "  ")
+	content, err := yaml.Marshal(c)
 	if err != nil {
 		return err
 	}
