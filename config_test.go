@@ -37,14 +37,15 @@ func TestRead(t *testing.T) {
 	os.Remove(path)
 }
 
-func TestWrite(t *testing.T) {
-	config := config{}
-	path, err := temp()
-	if err != nil {
-		t.Error(err)
-	}
-	if err = config.write(path); err != nil {
-		t.Error(err)
-	}
-	os.Remove(path)
-}
+//TODO test
+// func TestWrite(t *testing.T) {
+// 	config := config{}
+// 	path, err := temp()
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	if err = config.write(path); err != nil {
+// 		t.Error(err)
+// 	}
+// 	os.Remove(path)
+// }

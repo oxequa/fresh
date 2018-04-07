@@ -61,12 +61,6 @@ var req = []testRoute{
 	},
 }
 
-func ctrl(r testRoute) HandlerFunc {
-	return func(context Context) error {
-		return context.Response().JSON(r.code, r.body)
-	}
-}
-
 func setup() fresh {
 	f := fresh{
 		config: new(config),
@@ -74,6 +68,12 @@ func setup() fresh {
 	}
 	f.router = &router{&f, &route{}, make(map[string]string)}
 	return f
+}
+
+func ctrl(r testRoute) HandlerFunc {
+	return func(context Context) error {
+		return context.Response().JSON(r.code, r.body)
+	}
 }
 
 func requests(method string, f *fresh) {
@@ -135,6 +135,32 @@ func TestFresh_Run(t *testing.T) {
 			t.Error(err)
 		}
 	}()
+
+	// Test multiple calls
+	//TODO test
+	// fresh := setup()
+	// rec := httptest.NewRecorder()
+	// fresh.GET("multiple", func(c Context) error {
+	// 	time.Sleep(2 * time.Second)
+	// 	return c.Response().JSON(200, nil)
+	// })
+	// var wg sync.WaitGroup
+	// wg.Add(100)
+	// for i := 1; i <= 100; i++ {
+	// 	go func(){
+	// 		defer wg.Done()
+	// 		req, err := http.NewRequest("GET", "multiple", nil)
+	// 		if err != nil {
+	// 			t.Fatal("Creating GET multiple request failed!")
+	// 		}
+	// 		fresh.router.ServeHTTP(rec, req)
+	// 		// status code
+	// 		if rec.Code != 200 {
+	// 			t.Fatal("Server error: Returned ", rec.Code, " instead of ", 200)
+	// 		}
+	// 	}()
+	// }
+	// wg.Wait()
 }
 
 func TestFresh_GET(t *testing.T) {

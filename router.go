@@ -96,16 +96,26 @@ func (r *router) printRoutes() {
 	tree([]*route{r.route}, "")
 }
 
-// Run a middleware
-func (h *handler) middleware(c Context, handlers ...HandlerFunc) error {
-	for _, f := range handlers {
-		if f != nil {
-			if err := f(c); err != nil {
-				return err
-			}
+func (r *route) getHandler(method string) *handler {
+	for _, h := range r.handlers {
+		if h.method == method {
+			return h
 		}
 	}
 	return nil
+}
+
+// Register static routes for assets
+func (r *router) registerStatic(static map[string]string) Handler {
+	r.static = static
+	return nil
+}
+
+// Register a route with its handlers
+func (r *router) register(method string, path string, handler HandlerFunc) Handler {
+	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
+	route := r.scanTree(r.route, splittedPath, nil, true)
+	return route.add(method, handler)
 }
 
 // Add handlers to a route
@@ -120,28 +130,6 @@ func (r *route) add(method string, controller HandlerFunc, middleware ...Handler
 	h := handler{method: method, ctrl: controller}
 	r.handlers = append(r.handlers, &h)
 	return &h
-}
-
-func (r *route) getHandler(method string) *handler {
-	for _, h := range r.handlers {
-		if h.method == method {
-			return h
-		}
-	}
-	return nil
-}
-
-// Register a route with its handlers
-func (r *router) register(method string, path string, handler HandlerFunc) Handler {
-	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
-	route := r.scanTree(r.route, splittedPath, nil, true)
-	return route.add(method, handler)
-}
-
-// Register static routes for assets
-func (r *router) registerStatic(static map[string]string) Handler {
-	r.static = static
-	return nil
 }
 
 // Process a request
@@ -171,22 +159,6 @@ func (r *router) process(handler *handler, response http.ResponseWriter, request
 	return
 }
 
-// After middleware for a single route
-func (h *handler) After(middleware ...HandlerFunc) Handler {
-	if middleware != nil {
-		h.after = append(h.after, middleware...)
-	}
-	return h
-}
-
-// Before middleware for a single route
-func (h *handler) Before(middleware ...HandlerFunc) Handler {
-	if middleware != nil {
-		h.before = append(h.before, middleware...)
-	}
-	return h
-}
-
 // After middleware for a resource
 func (r *resource) After(middleware ...HandlerFunc) Resource {
 	if middleware != nil {
@@ -205,6 +177,34 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 		}
 	}
 	return r
+}
+
+// After middleware for a single route
+func (h *handler) After(middleware ...HandlerFunc) Handler {
+	if middleware != nil {
+		h.after = append(h.after, middleware...)
+	}
+	return h
+}
+
+// Before middleware for a single route
+func (h *handler) Before(middleware ...HandlerFunc) Handler {
+	if middleware != nil {
+		h.before = append(h.before, middleware...)
+	}
+	return h
+}
+
+// Run a middleware
+func (h *handler) middleware(c Context, handlers ...HandlerFunc) error {
+	for _, f := range handlers {
+		if f != nil {
+			if err := f(c); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Router main function. Find the matching route and call registered handlers.
