@@ -32,6 +32,7 @@ type (
 		request       *request      // request config
 		gzip          *Gzip         // gzip config
 		cors          *CORS         // cors options
+		dispatch      *Dispatch     // dispatch options
 		handlers      []HandlerFunc // handlers array
 		staticDefault []string      // default static files served
 	}
@@ -42,8 +43,8 @@ type (
 	}
 
 	Dispatch struct {
-		Option bool
-		Trace bool
+		Option bool `json:"option,omitempty"`
+		Trace  bool `json:"trace,omitempty"`
 	}
 
 	Gzip struct {
