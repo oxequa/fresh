@@ -73,6 +73,7 @@ type (
 	Filter func(Context) bool
 )
 
+// Read server config from a file
 func (c *config) read(path string) error {
 	content, err := ioutil.ReadFile(filepath.Join(path, file))
 	if err != nil {
@@ -81,6 +82,7 @@ func (c *config) read(path string) error {
 	return yaml.Unmarshal(content, &c)
 }
 
+// Write save server config in a file
 func (c *config) write(path string) error {
 	content, err := yaml.Marshal(c)
 	if err != nil {
@@ -94,6 +96,7 @@ func (c *config) write(path string) error {
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
 }
 
+// Append a custom handler
 func (c *config) append(handler HandlerFunc) Config {
 	c.handlers = append(c.handlers, handler)
 	return c
@@ -109,6 +112,7 @@ func (c *config) contains(s string, arr []string) bool {
 	return false
 }
 
+// TSL with auto cert file
 func (c *config) TSL() Config {
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
@@ -121,6 +125,7 @@ func (c *config) TSL() Config {
 	return c
 }
 
+// Gzip configuration
 func (c *config) Gzip(g Gzip) Config {
 	// set only value not nil or zero or not set
 	c.gzip = &g
@@ -163,6 +168,7 @@ func (c *config) Gzip(g Gzip) Config {
 	return c.append(handler)
 }
 
+// CORS configuration
 func (c *config) CORS(s CORS) Config {
 	c.cors = &s
 	// cors handler
@@ -200,45 +206,54 @@ func (c *config) CORS(s CORS) Config {
 	return c.append(handler)
 }
 
+// Port set server port
 func (c *config) Port(port int) Config {
 	// check if available
 	c.port = port
 	return c
 }
 
+// Host set server host
 func (c *config) Host(host string) Config {
 	// check if available
 	c.host = host
 	return c
 }
 
+// Debug enable/disable
 func (c *config) Debug(status bool) Config {
 	c.debug = status
 	return c
 }
 
+// Logger enable/disable events watch
 func (c *config) Logger(status bool) Config {
 	c.logger = status
 	return c
 }
 
+// TSl with a cert file
 func (c *config) CertTSL(certFile, keyFile string) Config {
 	return c
 }
 
+// StaticDefault set a list of static files
 func (c *config) StaticDefault(staticDefault []string) Config {
 	c.staticDefault = staticDefault
 	return c
 }
 
+// WriteHeader set a gzip header
 func (g Gzip) WriteHeader(i int) {
 	g.responseWriter.WriteHeader(i)
 }
 
+// Header return gzip header
 func (g Gzip) Header() http.Header {
 	return g.responseWriter.Header()
 }
 
+// Write gzip
 func (g Gzip) Write(b []byte) (int, error) {
 	// check buffer
 	return g.writer.Write(b)
