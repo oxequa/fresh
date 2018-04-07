@@ -36,9 +36,14 @@ type (
 		staticDefault []string      // default static files served
 	}
 
-	limits struct {
+	Limit struct {
 		BodyLimit   string `json:"body_limit,omitempty"`
 		HeaderLimit string `json:"header_limit,omitempty"`
+	}
+
+	Dispatch struct {
+		Option bool
+		Trace bool
 	}
 
 	Gzip struct {
@@ -67,6 +72,7 @@ type (
 		Debug(bool) Config
 		Host(string) Config
 		Logger(bool) Config
+		Dispatch(Dispatch) Config
 		CertTSL(string, string) Config
 		StaticDefault([]string) Config
 	}
@@ -220,6 +226,10 @@ func (c *config) Debug(status bool) Config {
 
 func (c *config) Logger(status bool) Config {
 	c.logger = status
+	return c
+}
+
+func (c *config) Dispatch(d Dispatch) Config {
 	return c
 }
 
