@@ -3,6 +3,8 @@ package fresh
 import (
 	"compress/gzip"
 	"crypto/tls"
+	"golang.org/x/crypto/acme/autocert"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,8 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"golang.org/x/crypto/acme/autocert"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -20,24 +20,24 @@ const (
 )
 
 type (
-	config struct {
-		*fresh
-		port          int           // server port
-		host          string        // server host
-		logs          bool          // server lead
-		debug         bool          // debug status
-		logger        bool          // logger status
-		tsl           *tls.Config   // tsl status
-		request       *request      // request config
-		gzip          *Gzip         // gzip config
-		cors          *CORS         // cors options
-		handlers      []HandlerFunc // handlers array
-		staticDefault []string      // default static files served
+	Config struct {
+		*fresh   `yaml:"-"`
+		request  *request          `yaml:"-"`       // request config
+		handlers []HandlerFunc     `yaml:"-"`       // handlers array
+		Host     string            `yaml:"host,omitempty"`    // server host
+		Port     int               `yaml:"port,omitempty"`    // server port
+		Logs     bool              `yaml:"logs,omitempty"`    // server logs
+		Debug    bool              `yaml:"debug,omitempty"`   // debug status
+		TSL      *TSL              `yaml:"tsl,omitempty"`     // tsl options
+		Gzip     *Gzip             `yaml:"gzip,omitempty"`    // gzip Config
+		CORS     *CORS             `yaml:"cors,omitempty"`    // cors options
+		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
+		Static   map[string]string `yaml:"static,omitempty"`  // serve static files
 	}
 
 	Limit struct {
-		BodyLimit   string `yaml:"body_limit,omitempty"`
-		HeaderLimit string `yaml:"header_limit,omitempty"`
+		BodyLimit   string `yaml:"body,omitempty"`
+		HeaderLimit string `yaml:"header,omitempty"`
 	}
 
 	Gzip struct {
@@ -46,7 +46,13 @@ type (
 		Level          int      `yaml:"level,omitempty"`
 		MinSize        int      `yaml:"size,omitempty"`
 		Types          []string `yaml:"types,omitempty"`
-		Filter         Filter
+		Filters        []Filter `yaml:"-,omitempty"`
+	}
+
+	TSL struct {
+		Auto bool   `yaml:"auto,omitempty"`
+		Crt  string `yaml:"crt,omitempty"`
+		Key  string `yaml:"key,omitempty"`
 	}
 
 	CORS struct {
@@ -55,26 +61,112 @@ type (
 		Expose      []string `yaml:"expose,omitempty"`
 		MaxAge      int      `yaml:"maxage,omitempty"`
 		Credentials bool     `yaml:"credentials,omitempty"`
-		Filter      Filter
-	}
-
-	Config interface {
-		TSL() Config
-		Port(int) Config
-		CORS(CORS) Config
-		Gzip(Gzip) Config
-		Debug(bool) Config
-		Host(string) Config
-		Logger(bool) Config
-		CertTSL(string, string) Config
-		StaticDefault([]string) Config
+		Filters     []Filter `yaml:"-,omitempty"`
 	}
 
 	Filter func(Context) bool
 )
 
-// Read server config from a file
-func (c *config) read(path string) error {
+// Init server config
+func config() *Config {
+	c := Config{}
+	// add handlers
+	c.handlers = append(c.handlers,
+		// gzip
+		func(context Context) error {
+			if c.Gzip != nil {
+				reply := context.Response().get()
+				// check buffer length
+				if len(reply.response) >= c.Gzip.MinSize {
+					r := context.Request().Get()
+					w := context.Response().Get()
+					if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
+						ct := r.Header.Get(ContentType)
+						if len(ct) == 0 || contain(ct, c.Gzip.Types) {
+							if len(ct) == 0 {
+								// detect content type by reading response
+								w.Header().Set(ContentType, http.DetectContentType(reply.response))
+							}
+							// set header
+							w.Header().Set(ContentEncoding, MIMEGzip)
+							// del length if exist
+							w.Header().Del(ContentLength)
+							// new writer
+							gz := &gzip.Writer{}
+							defer gz.Close()
+							if c.Gzip.Level >= gzip.NoCompression && c.Gzip.Level <= gzip.BestCompression {
+								var err error
+								gz, err = gzip.NewWriterLevel(w, c.Gzip.Level)
+								if err != nil {
+									context.Writer(w)
+									return err
+								}
+							} else {
+								gz = gzip.NewWriter(w)
+							}
+							context.Writer(&Gzip{writer: gz, responseWriter: w})
+						}
+					}
+				}
+			}
+			return nil
+		},
+		// cors
+		func(context Context) error {
+			if c.CORS != nil {
+				w := context.Response().Get()
+				// Allow origins
+				if len(c.CORS.Origins) > 0 {
+					for _, h := range c.CORS.Origins {
+						if h == "*" {
+							w.Header().Set(AccessControlAllowOrigin, h)
+							break
+						} else if h == context.Request().Get().Header.Get("Origin") {
+							w.Header().Set(AccessControlAllowOrigin, h)
+						}
+					}
+				}
+				// Allowed Methods
+				if len(c.CORS.Methods) > 0 {
+					w.Header().Set(AccessControlAllowMethods, strings.Join(c.CORS.Methods[:], ","))
+				}
+				// Allow credentials
+				if c.CORS.Credentials {
+					w.Header().Set(AccessControlAllowCredentials, "true")
+				}
+				// Expose headers
+				if len(c.CORS.Expose) > 0 {
+					w.Header().Set(AccessControlExposes, strings.Join(c.CORS.Expose[:], ","))
+				}
+				// Max age
+				if c.CORS.MaxAge > 0 {
+					w.Header().Set(AccessControlMaxAge, strconv.Itoa(c.CORS.MaxAge))
+				}
+			}
+			return nil
+		},
+		// static
+		func(context Context) error {
+			return nil
+		},
+	)
+	return &c
+}
+
+// TSL with auto cert file
+func (c *Config) tsl() *Config {
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(c.Host),
+	}
+	c.server.TLSConfig = &tls.Config{
+		GetCertificate: certManager.GetCertificate,
+	}
+	return c
+}
+
+// Read server Config from a file
+func (c *Config) read(path string) error {
 	content, err := ioutil.ReadFile(filepath.Join(path, file))
 	if err != nil {
 		return err
@@ -82,8 +174,8 @@ func (c *config) read(path string) error {
 	return yaml.Unmarshal(content, &c)
 }
 
-// Write save server config in a file
-func (c *config) write(path string) error {
+// Write save server Config in a file
+func (c *Config) write(path string) error {
 	content, err := yaml.Marshal(c)
 	if err != nil {
 		return err
@@ -96,165 +188,18 @@ func (c *config) write(path string) error {
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
 }
 
-// Append a custom handler
-func (c *config) append(handler HandlerFunc) Config {
-	c.handlers = append(c.handlers, handler)
-	return c
-}
-
-func (c *config) contains(s string, arr []string) bool {
-	s = strings.ToLower(s)
-	for _, val := range arr {
-		if val == s {
-			return true
-		}
-	}
-	return false
-}
-
-// TSL with auto cert file
-func (c *config) TSL() Config {
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(c.host),
-		Cache:      autocert.DirCache(".certs"), //folder for storing certificates
-	}
-	c.server.TLSConfig = &tls.Config{
-		GetCertificate: certManager.GetCertificate,
-	}
-	return c
-}
-
-// Gzip configuration
-func (c *config) Gzip(g Gzip) Config {
-	// set only value not nil or zero or not set
-	c.gzip = &g
-	// gzip handler
-	handler := func(context Context) (err error) {
-		reply := context.Response().get()
-		// check buffer length
-		if len(reply.response) >= c.gzip.MinSize {
-			r := context.Request().Get()
-			w := context.Response().Get()
-			if strings.Contains(r.Header.Get(AcceptEncoding), MIMEGzip) {
-				ct := r.Header.Get(ContentType)
-				if len(ct) == 0 || c.contains(ct, c.gzip.Types) {
-					if len(ct) == 0 {
-						// detect content type by reading response
-						w.Header().Set(ContentType, http.DetectContentType(reply.response))
-					}
-					// set header
-					w.Header().Set(ContentEncoding, MIMEGzip)
-					// del length if exist
-					w.Header().Del(ContentLength)
-					// new writer
-					gz := &gzip.Writer{}
-					defer gz.Close()
-					if c.gzip.Level >= gzip.NoCompression && c.gzip.Level <= gzip.BestCompression {
-						gz, err = gzip.NewWriterLevel(w, c.gzip.Level)
-						if err != nil {
-							context.Writer(w)
-							return err
-						}
-					} else {
-						gz = gzip.NewWriter(w)
-					}
-					context.Writer(Gzip{writer: gz, responseWriter: w})
-				}
-			}
-		}
-		return nil
-	}
-	return c.append(handler)
-}
-
-// CORS configuration
-func (c *config) CORS(s CORS) Config {
-	c.cors = &s
-	// cors handler
-	handler := func(context Context) error {
-		w := context.Response().Get()
-		// Allow origins
-		if len(c.cors.Origins) > 0 {
-			for _, h := range c.cors.Origins {
-				if h == "*" {
-					w.Header().Set(AccessControlAllowOrigin, h)
-					break
-				} else if h == context.Request().Get().Header.Get("Origin") {
-					w.Header().Set(AccessControlAllowOrigin, h)
-				}
-			}
-		}
-		// Allowed Methods
-		if len(c.cors.Methods) > 0 {
-			w.Header().Set(AccessControlAllowMethods, strings.Join(c.cors.Methods[:], ","))
-		}
-		// Allow credentials
-		if c.cors.Credentials {
-			w.Header().Set(AccessControlAllowCredentials, "true")
-		}
-		// Expose headers
-		if len(c.cors.Expose) > 0 {
-			w.Header().Set(AccessControlExposes, strings.Join(c.cors.Expose[:], ","))
-		}
-		// Max age
-		if c.cors.MaxAge > 0 {
-			w.Header().Set(AccessControlMaxAge, strconv.Itoa(c.cors.MaxAge))
-		}
-		return nil
-	}
-	return c.append(handler)
-}
-
-// Port set server port
-func (c *config) Port(port int) Config {
-	// check if available
-	c.port = port
-	return c
-}
-
-// Host set server host
-func (c *config) Host(host string) Config {
-	// check if available
-	c.host = host
-	return c
-}
-
-// Debug enable/disable
-func (c *config) Debug(status bool) Config {
-	c.debug = status
-	return c
-}
-
-// Logger enable/disable events watch
-func (c *config) Logger(status bool) Config {
-	c.logger = status
-	return c
-}
-
-// TSl with a cert file
-func (c *config) CertTSL(certFile, keyFile string) Config {
-	return c
-}
-
-// StaticDefault set a list of static files
-func (c *config) StaticDefault(staticDefault []string) Config {
-	c.staticDefault = staticDefault
-	return c
-}
-
 // WriteHeader set a gzip header
-func (g Gzip) WriteHeader(i int) {
+func (g *Gzip) WriteHeader(i int) {
 	g.responseWriter.WriteHeader(i)
 }
 
 // Header return gzip header
-func (g Gzip) Header() http.Header {
+func (g *Gzip) Header() http.Header {
 	return g.responseWriter.Header()
 }
 
 // Write gzip
-func (g Gzip) Write(b []byte) (int, error) {
+func (g *Gzip) Write(b []byte) (int, error) {
 	// check buffer
 	return g.writer.Write(b)
 }

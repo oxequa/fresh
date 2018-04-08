@@ -16,8 +16,8 @@ func temp() (d string, err error) {
 }
 
 func TestRead(t *testing.T) {
-	result := config{}
-	expected := config{port: 3000}
+	result := Config{}
+	expected := Config{Port: 3000}
 
 	content, err := json.Marshal(&expected)
 	if err != nil {
@@ -37,15 +37,14 @@ func TestRead(t *testing.T) {
 	os.Remove(path)
 }
 
-//TODO test
-// func TestWrite(t *testing.T) {
-// 	config := config{}
-// 	path, err := temp()
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	if err = config.write(path); err != nil {
-// 		t.Error(err)
-// 	}
-// 	os.Remove(path)
-// }
+func TestWrite(t *testing.T) {
+	config := Config{}
+	path, err := temp()
+	if err != nil {
+		t.Error(err)
+	}
+	if err = config.write(path); err != nil {
+		t.Error(err)
+	}
+	os.Remove(path)
+}
