@@ -37,7 +37,7 @@ type route struct {
 
 // Router struct
 type router struct {
-	parent *fresh
+	*fresh
 	route  *route
 	static map[string]string
 }
@@ -69,33 +69,6 @@ func getFuncName(f interface{}) string {
 	return name[len(name)-1]
 }
 
-// Print the list of routes
-func (r *router) printRoutes() {
-	var tree func(routes []*route, parentPath string) error
-	tree = func(routes []*route, parentPath string) error {
-		for _, route := range routes {
-			separator := ""
-			if strings.HasSuffix(parentPath, "/") == false {
-				separator = "/"
-			}
-			currentPath := parentPath + separator + route.path
-
-			for _, handler := range route.handlers {
-				log.Println(
-					handler.method,
-					currentPath,
-					getFuncName(handler.ctrl),
-					len(handler.before),
-					len(handler.after),
-				)
-			}
-			tree(route.children, currentPath)
-		}
-		return nil
-	}
-	tree([]*route{r.route}, "")
-}
-
 func (r *route) getHandler(method string) *handler {
 	for _, h := range r.handlers {
 		if h.method == method {
@@ -103,19 +76,6 @@ func (r *route) getHandler(method string) *handler {
 		}
 	}
 	return nil
-}
-
-// Register static routes for assets
-func (r *router) registerStatic(static map[string]string) Handler {
-	r.static = static
-	return nil
-}
-
-// Register a route with its handlers
-func (r *router) register(method string, path string, handler HandlerFunc) Handler {
-	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
-	route := r.scanTree(r.route, splittedPath, nil, true)
-	return route.add(method, handler)
 }
 
 // Add handlers to a route
@@ -148,7 +108,7 @@ func (r *router) process(handler *handler, response http.ResponseWriter, request
 		return err
 	}
 
-	for _, ch := range r.parent.config.handlers {
+	for _, ch := range r.Config.handlers {
 		err := ch(context)
 		if err != nil {
 			return err
@@ -179,6 +139,18 @@ func (r *resource) Before(middleware ...HandlerFunc) Resource {
 	return r
 }
 
+// Run a middleware
+func (h *handler) middleware(c Context, handlers ...HandlerFunc) error {
+	for _, f := range handlers {
+		if f != nil {
+			if err := f(c); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // After middleware for a single route
 func (h *handler) After(middleware ...HandlerFunc) Handler {
 	if middleware != nil {
@@ -195,35 +167,39 @@ func (h *handler) Before(middleware ...HandlerFunc) Handler {
 	return h
 }
 
-// Run a middleware
-func (h *handler) middleware(c Context, handlers ...HandlerFunc) error {
-	for _, f := range handlers {
-		if f != nil {
-			if err := f(c); err != nil {
-				return err
+// Print the list of routes
+func (r *router) printRoutes() {
+	var tree func(routes []*route, parentPath string) error
+	tree = func(routes []*route, parentPath string) error {
+		for _, route := range routes {
+			separator := ""
+			if strings.HasSuffix(parentPath, "/") == false {
+				separator = "/"
 			}
+			currentPath := parentPath + separator + route.path
+
+			for _, handler := range route.handlers {
+				log.Println(
+					handler.method,
+					currentPath,
+					getFuncName(handler.ctrl),
+					len(handler.before),
+					len(handler.after),
+				)
+			}
+			tree(route.children, currentPath)
 		}
+		return nil
 	}
-	return nil
+	tree([]*route{r.route}, "")
 }
 
-// Router main function. Find the matching route and call registered handlers.
-func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	context := &context{}
-	context.parameters = make(map[string]string)
-	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
-	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
-		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
-			err := r.process(routeHandler, response, request, context)
-			if err != nil {
-				context.Response().writeErr(err)
-			}
-		} else {
-			r.serveStatic(response, request)
-		}
-	} else {
-		r.serveStatic(response, request)
+// Register static routes for assets
+func (r *router) addStatic(static map[string]string) Handler {
+	for k, v := range static {
+		r.static[k] = v
 	}
+	return nil
 }
 
 // Router main function. Find the matching route and call registered handlers.
@@ -236,7 +212,7 @@ func (r *router) serveStatic(response http.ResponseWriter, request *http.Request
 			http.ServeFile(response, request, path)
 			return
 		} else if f.IsDir() {
-			for _, testDefaultFile := range r.parent.config.staticDefault {
+			for _, testDefaultFile := range r.Config.Default {
 				filePath := filepath.Join(path, testDefaultFile)
 				if f, err := os.Stat(filePath); err == nil && !f.IsDir() {
 					http.ServeFile(response, request, filePath)
@@ -247,6 +223,13 @@ func (r *router) serveStatic(response http.ResponseWriter, request *http.Request
 		}
 	}
 	http.NotFound(response, request)
+}
+
+// Register a route with its handlers
+func (r *router) register(method string, path string, handler HandlerFunc) Handler {
+	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
+	route := r.scanTree(r.route, splittedPath, nil, true)
+	return route.add(method, handler)
 }
 
 // Scan the tree to find the matching route (if save create all needed routes)
@@ -279,4 +262,21 @@ func (r *router) scanTree(parent *route, path []string, context *context, save b
 		return r.scanTree(newRoute, path[1:], context, save)
 	}
 	return parent
+}
+
+// Router main function. Find the matching route and call registered handlers.
+func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	context := &context{}
+	context.parameters = make(map[string]string)
+	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
+	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
+		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
+			err := r.process(routeHandler, response, request, context)
+			if err != nil {
+				context.Response().writeErr(err)
+			}
+			return
+		}
+	}
+	r.serveStatic(response, request)
 }

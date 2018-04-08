@@ -19,9 +19,8 @@ import (
 // Main Fresh structure
 type (
 	fresh struct {
-		config *config
+		*Config
 		router *router
-		static map[string]string
 		server *http.Server
 	}
 
@@ -48,7 +47,6 @@ type (
 		Rest
 		Run() error
 		Shutdown() error
-		Config() Config
 		Group(string) Group
 	}
 
@@ -63,17 +61,17 @@ type (
 
 // Initialize main Fresh structure
 func New() Fresh {
-	fresh := fresh{
-		config: new(config),
-		server: new(http.Server),
-	}
+	fresh := fresh{}
+	fresh.Config = config()
+	fresh.server = new(http.Server)
 	fresh.router = &router{&fresh, &route{}, make(map[string]string)}
+
 	wd, _ := os.Getwd()
-	if fresh.config.read(wd) != nil {
+	if fresh.Config.read(wd) != nil {
 		// random port
 		rand.Seed(time.Now().Unix())
-		fresh.config.host = "127.0.0.1"
-		fresh.config.port = rand.Intn(9999-1111) + 1111
+		fresh.Config.Host = "127.0.0.1"
+		fresh.Config.Port = rand.Intn(9999-1111) + 1111
 	}
 	return &fresh
 }
@@ -81,30 +79,29 @@ func New() Fresh {
 // Run HTTP server
 func (f *fresh) Run() error {
 	shutdown := make(chan os.Signal)
-	port := strconv.Itoa(f.config.port)
+	port := strconv.Itoa(f.Port)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	listener, err := net.Listen("tcp", f.config.host+":"+port)
+	listener, err := net.Listen("tcp", f.Host+":"+port)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
 	go func() {
-		log.Println("Server listen on", f.config.host+":"+port)
+		log.Println("Server listen on", f.Host+":"+port)
 		f.server.Handler = f.router
 		f.router.printRoutes()
 		// check for tsl before serve
+		if f.TSL != nil {
+			if f.TSL.Auto {
+				f.tsl()
+			}
+		}
 		f.server.Serve(listener)
 	}()
 	<-shutdown
 	f.Shutdown()
 	return nil
-}
-
-// Config interface
-func (f *fresh) Config() Config {
-	return f.config
 }
 
 // Shutdown server
@@ -202,19 +199,7 @@ func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
 
 // ASSETS serve a list of static files. Array of files or directories TODO write logic
 func (f *fresh) STATIC(static map[string]string) {
-	f.router.registerStatic(static)
-}
-
-// Init set context request and response
-func (c *context) init(r *http.Request, w http.ResponseWriter) {
-	c.response = response{w: w, r: r}
-	c.request = request{r: r}
-	c.request.setRouteParam(c.parameters)
-}
-
-// Overwrite http writer
-func (c *context) Writer(w http.ResponseWriter) {
-	c.response.w = w
+	f.router.addStatic(static)
 }
 
 // Return context request
@@ -225,4 +210,16 @@ func (c *context) Request() Request {
 // Return context response
 func (c *context) Response() Response {
 	return &c.response
+}
+
+// Overwrite http writer
+func (c *context) Writer(w http.ResponseWriter) {
+	c.response.w = w
+}
+
+// Init set context request and response
+func (c *context) init(r *http.Request, w http.ResponseWriter) {
+	c.response = response{w: w, r: r}
+	c.request = request{r: r}
+	c.request.setRouteParam(c.parameters)
 }

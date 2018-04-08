@@ -63,7 +63,7 @@ var req = []testRoute{
 
 func setup() fresh {
 	f := fresh{
-		config: new(config),
+		Config: config(),
 		server: new(http.Server),
 	}
 	f.router = &router{&f, &route{}, make(map[string]string)}
@@ -115,10 +115,9 @@ func records(method string, body io.Reader, f fresh, t *testing.T) {
 		}
 		// body
 		expected, _ := json.Marshal(elm.body)
-		body, _ := ioutil.ReadAll(rec.Body)
-		result := string(body)
-		if result != string(expected) {
-			t.Fatal("Expected", elm.body, "instead", rec.Body)
+		result, _ := ioutil.ReadAll(rec.Body)
+		if string(result) != string(expected) {
+			t.Fatal("Expected", string(expected), "instead", string(result))
 		}
 	}
 }
@@ -138,16 +137,15 @@ func TestFresh_Run(t *testing.T) {
 
 	// Test multiple calls
 	//TODO test
-	// fresh := setup()
 	// rec := httptest.NewRecorder()
-	// fresh.GET("multiple", func(c Context) error {
-	// 	time.Sleep(2 * time.Second)
-	// 	return c.Response().JSON(200, nil)
+	// f.GET("multiple", func(c Context) error {
+	// 	time.Sleep(5 * time.Second)
+	// 	return c.Response().JSON(2, nil)
 	// })
 	// var wg sync.WaitGroup
-	// wg.Add(100)
-	// for i := 1; i <= 100; i++ {
-	// 	go func(){
+	// wg.Add(10)
+	// for i := 1; i <= 10; i++ {
+	// 	go func() {
 	// 		defer wg.Done()
 	// 		req, err := http.NewRequest("GET", "multiple", nil)
 	// 		if err != nil {
