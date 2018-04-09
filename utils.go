@@ -1,9 +1,9 @@
 package fresh
 
 import (
-	"strings"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -18,19 +18,19 @@ const (
 func size(s string) (r int64) {
 	format := regexp.MustCompile("[A-Z]+")
 	num, err := strconv.ParseInt(regexp.MustCompile("[0-9]+").String(), 10, 64)
-	if err != nil{
+	if err != nil {
 		return
 	}
 	switch format.String() {
-	case "B","b":
+	case "B", "b":
 		return num * B
-	case "KB","K","kb","k":
+	case "KB", "K", "kb", "k":
 		return num * K
-	case "MB","M","mb","m":
+	case "MB", "M", "mb", "m":
 		return num * M
-	case "GB","G","gb","g":
+	case "GB", "G", "gb", "g":
 		return num * G
-	case "TB","T","tb","t":
+	case "TB", "T", "tb", "t":
 		return num * G
 	}
 	return

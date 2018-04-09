@@ -1,6 +1,7 @@
 package fresh
 
 import (
+	"bytes"
 	"compress/gzip"
 	"crypto/tls"
 	"golang.org/x/crypto/acme/autocert"
@@ -12,7 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"bytes"
 )
 
 const (
@@ -32,7 +32,7 @@ type (
 		TSL      *TSL              `yaml:"tsl,omitempty"`     // tsl options
 		Gzip     *Gzip             `yaml:"gzip,omitempty"`    // gzip Config
 		CORS     *CORS             `yaml:"cors,omitempty"`    // cors options
-		Limit     *Limit             `yaml:"cors,omitempty"`    // limit options
+		Limit    *Limit            `yaml:"limit,omitempty"`   // limit options
 		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
 		Static   map[string]string `yaml:"static,omitempty"`  // serve static files
 	}
@@ -170,7 +170,7 @@ func (c *Config) Init() *Config {
 			// read body
 			buf := new(bytes.Buffer)
 			l, err := buf.ReadFrom(req.Body)
-			if err != nil || l > size(c.Limit.Body){
+			if err != nil || l > size(c.Limit.Body) {
 				return nil
 			}
 			return nil
