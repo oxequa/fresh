@@ -36,6 +36,7 @@ type (
 		Limit    *Limit            `yaml:"limit,omitempty"`   // limit options
 		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
 		Static   map[string]string `yaml:"static,omitempty"`  // serve static files
+		Options  bool              `yaml:"options,omitempty"`
 	}
 
 	Limit struct {
@@ -61,6 +62,7 @@ type (
 	CORS struct {
 		Origins     []string `yaml:"origins,omitempty"`
 		Methods     []string `yaml:"methods,omitempty"`
+		Headers     []string `yaml:"headers,omitempty"`
 		Expose      []string `yaml:"expose,omitempty"`
 		MaxAge      int      `yaml:"maxage,omitempty"`
 		Credentials bool     `yaml:"credentials,omitempty"`
@@ -137,6 +139,10 @@ func (c *Config) Init() *Config {
 							w.Header().Set(AccessControlAllowOrigin, h)
 						}
 					}
+				}
+				// Allowed Headers
+				if len(c.CORS.Headers) > 0 {
+					w.Header().Set(AccessControlAllowHeaders, strings.Join(c.CORS.Headers[:], ","))
 				}
 				// Allowed Methods
 				if len(c.CORS.Methods) > 0 {

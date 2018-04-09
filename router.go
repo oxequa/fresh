@@ -270,6 +270,15 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	context.parameters = make(map[string]string)
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
 	if route := r.scanTree(r.route, splittedPath, context, false); route != nil {
+		if r.Options && request.Method == "OPTIONS" {
+			h := &handler{
+				ctrl: func(c Context) error {
+					return c.Response().Code(http.StatusOK)
+				},
+			}
+			r.process(h, response, request, context)
+			return
+		}
 		if routeHandler := route.getHandler(request.Method); routeHandler != nil {
 			err := r.process(routeHandler, response, request, context)
 			if err != nil {

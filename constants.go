@@ -23,6 +23,7 @@ const (
 	AccessControlExposes          = "Access-Control-Expose-s"
 	AccessControlRequests         = "Access-Control-Request-s"
 	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
+	AccessControlAllowHeaders     = "Access-Control-Allow-Headers"
 )
 
 // Request
