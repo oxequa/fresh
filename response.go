@@ -29,8 +29,6 @@ type (
 		XMLFormat(int, interface{}, string) error
 		JSONFormat(int, interface{}, string) error
 		JSONPFormat(int, string, interface{}, string) error
-
-		DTO
 	}
 
 	reply struct {
@@ -43,7 +41,6 @@ type (
 		w     http.ResponseWriter
 		r     *http.Request
 		reply reply
-		*dto
 	}
 )
 

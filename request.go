@@ -28,8 +28,6 @@ type (
 		RouteParam(string) string
 		FormValue(string) string
 		QueryParam(string) string
-
-		DTO
 	}
 
 	request struct {
@@ -37,7 +35,6 @@ type (
 		r  *http.Request
 		ws *websocket.Conn
 		p  map[string]string
-		*dto
 	}
 )
 
