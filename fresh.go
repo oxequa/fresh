@@ -20,8 +20,8 @@ import (
 type (
 	fresh struct {
 		*Config
+		*http.Server
 		router *router
-		server *http.Server
 	}
 
 	context struct {
@@ -62,8 +62,13 @@ type (
 // Initialize main Fresh structure
 func New() Fresh {
 	fresh := fresh{}
-	fresh.Config = config()
-	fresh.server = new(http.Server)
+	// Fresh config
+	fresh.Config = &Config{}
+	fresh.Config.fresh = &fresh
+	fresh.Config.Init()
+	// Server setting
+	fresh.Server = new(http.Server)
+	// Fresh router
 	fresh.router = &router{&fresh, &route{}, make(map[string]string)}
 
 	wd, _ := os.Getwd()
@@ -89,15 +94,13 @@ func (f *fresh) Run() error {
 
 	go func() {
 		log.Println("Server listen on", f.Host+":"+port)
-		f.server.Handler = f.router
+		f.Server.Handler = f.router
 		f.router.printRoutes()
 		// check for tsl before serve
 		if f.TSL != nil {
-			if f.TSL.Auto {
-				f.tsl()
-			}
+			f.tsl()
 		}
-		f.server.Serve(listener)
+		f.Server.Serve(listener)
 	}()
 	<-shutdown
 	f.Shutdown()
@@ -107,7 +110,7 @@ func (f *fresh) Run() error {
 // Shutdown server
 func (f *fresh) Shutdown() error {
 	ctx, cancel := httpContext.WithTimeout(httpContext.Background(), 5*time.Second)
-	f.server.Shutdown(ctx)
+	f.Server.Shutdown(ctx)
 	cancel()
 	log.Println("Server shutdown")
 	return nil

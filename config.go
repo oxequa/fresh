@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"bytes"
 )
 
 const (
@@ -22,8 +23,8 @@ const (
 type (
 	Config struct {
 		*fresh   `yaml:"-"`
-		request  *request          `yaml:"-"`       // request config
-		handlers []HandlerFunc     `yaml:"-"`       // handlers array
+		request  *request          `yaml:"-"`                 // request config
+		handlers []HandlerFunc     `yaml:"-"`                 // handlers array
 		Host     string            `yaml:"host,omitempty"`    // server host
 		Port     int               `yaml:"port,omitempty"`    // server port
 		Logs     bool              `yaml:"logs,omitempty"`    // server logs
@@ -31,13 +32,14 @@ type (
 		TSL      *TSL              `yaml:"tsl,omitempty"`     // tsl options
 		Gzip     *Gzip             `yaml:"gzip,omitempty"`    // gzip Config
 		CORS     *CORS             `yaml:"cors,omitempty"`    // cors options
+		Limit     *Limit             `yaml:"cors,omitempty"`    // limit options
 		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
 		Static   map[string]string `yaml:"static,omitempty"`  // serve static files
 	}
 
 	Limit struct {
-		BodyLimit   string `yaml:"body,omitempty"`
-		HeaderLimit string `yaml:"header,omitempty"`
+		Body   string `yaml:"body,omitempty"`
+		Header string `yaml:"header,omitempty"`
 	}
 
 	Gzip struct {
@@ -50,9 +52,9 @@ type (
 	}
 
 	TSL struct {
-		Auto bool   `yaml:"auto,omitempty"`
-		Crt  string `yaml:"crt,omitempty"`
-		Key  string `yaml:"key,omitempty"`
+		Force bool   `yaml:"force,omitempty"`
+		Crt   string `yaml:"crt,omitempty"`
+		Key   string `yaml:"key,omitempty"`
 	}
 
 	CORS struct {
@@ -64,12 +66,21 @@ type (
 		Filters     []Filter `yaml:"-,omitempty"`
 	}
 
+	Security struct {
+		XSS            string `yaml:"xss,omitempty"`
+		HSTS           int    `yaml:"hsts,omitempty"`
+		XDNS           bool   `yaml:"x-dns,omitempty"`
+		CSFR           string `yaml:"csfr,omitempty"`
+		XFrame         string `yaml:"x-frame,omitempty"`
+		XContentType   string `yaml:"x-content-type,omitempty"`
+		ReferrerPolicy string `yaml:"referrer-policy,omitempty"`
+	}
+
 	Filter func(Context) bool
 )
 
 // Init server config
-func config() *Config {
-	c := Config{}
+func (c *Config) Init() *Config {
 	// add handlers
 	c.handlers = append(c.handlers,
 		// gzip
@@ -145,12 +156,31 @@ func config() *Config {
 			}
 			return nil
 		},
+		// tsl
+		func(context Context) error {
+			return nil
+		},
+		// limit
+		func(context Context) error {
+			req := context.Request().Get()
+			// content length
+			if req.ContentLength > size(c.Limit.Body) {
+				return nil
+			}
+			// read body
+			buf := new(bytes.Buffer)
+			l, err := buf.ReadFrom(req.Body)
+			if err != nil || l > size(c.Limit.Body){
+				return nil
+			}
+			return nil
+		},
 		// static
 		func(context Context) error {
 			return nil
 		},
 	)
-	return &c
+	return c
 }
 
 // TSL with auto cert file
@@ -159,7 +189,7 @@ func (c *Config) tsl() *Config {
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(c.Host),
 	}
-	c.server.TLSConfig = &tls.Config{
+	c.Server.TLSConfig = &tls.Config{
 		GetCertificate: certManager.GetCertificate,
 	}
 	return c
