@@ -63,9 +63,11 @@ var req = []testRoute{
 
 func setup() fresh {
 	f := fresh{
-		Config: config(),
-		server: new(http.Server),
+		Config: &Config{},
+		Server: new(http.Server),
 	}
+	f.Config.fresh = &f
+	f.Config.Init()
 	f.router = &router{&f, &route{}, make(map[string]string)}
 	return f
 }
