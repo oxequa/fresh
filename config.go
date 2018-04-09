@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/tls"
-	"golang.org/x/crypto/acme/autocert"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +11,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/crypto/acme/autocert"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -162,16 +163,18 @@ func (c *Config) Init() *Config {
 		},
 		// limit
 		func(context Context) error {
-			req := context.Request().Get()
-			// content length
-			if req.ContentLength > size(c.Limit.Body) {
-				return nil
-			}
-			// read body
-			buf := new(bytes.Buffer)
-			l, err := buf.ReadFrom(req.Body)
-			if err != nil || l > size(c.Limit.Body) {
-				return nil
+			if c.Limit != nil {
+				req := context.Request().Get()
+				// content length
+				if req.ContentLength > size(c.Limit.Body) {
+					return nil
+				}
+				// read body
+				buf := new(bytes.Buffer)
+				l, err := buf.ReadFrom(req.Body)
+				if err != nil || l > size(c.Limit.Body) {
+					return nil
+				}
 			}
 			return nil
 		},
