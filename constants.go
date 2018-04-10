@@ -1,5 +1,16 @@
 package fresh
 
+const (
+	banner = `
+  _____              _     
+ |  ___| __ ___  ___| |__  
+ | |_ | '__/ _ \/ __| '_ \ 
+ |  _|| | |  __/\__ \ | | |
+ |_|  |_|  \___||___/_| |_|																				   
+--------------- (v.0.1) ---
+`
+)
+
 // MIME types
 const (
 	MIMEAppJSON    = "application/json" + ";" + UTF8

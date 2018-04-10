@@ -1,13 +1,13 @@
 package fresh
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
-	"runtime"
 	"strings"
+	"time"
+
+	"github.com/fatih/color"
 )
 
 // Handler struct
@@ -60,13 +60,6 @@ func isURLParameter(value string) bool {
 		return true
 	}
 	return false
-}
-
-// TODO remove
-func getFuncName(f interface{}) string {
-	path := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-	name := strings.Split(path, "/")
-	return name[len(name)-1]
 }
 
 func (r *route) getHandler(method string) *handler {
@@ -169,6 +162,7 @@ func (h *handler) Before(middleware ...HandlerFunc) Handler {
 
 // Print the list of routes
 func (r *router) printRoutes() {
+	println()
 	var tree func(routes []*route, parentPath string) error
 	tree = func(routes []*route, parentPath string) error {
 		for _, route := range routes {
@@ -179,13 +173,13 @@ func (r *router) printRoutes() {
 			currentPath := parentPath + separator + route.path
 
 			for _, handler := range route.handlers {
-				log.Println(
-					handler.method,
-					currentPath,
-					getFuncName(handler.ctrl),
-					len(handler.before),
-					len(handler.after),
-				)
+				print(time.Now().Format("2006-01-02 03:04:05:"))
+				print("[")
+				color.Set(color.FgHiGreen)
+				print(handler.method)
+				color.Unset()
+				print("] - ")
+				println(currentPath)
 			}
 			tree(route.children, currentPath)
 		}
