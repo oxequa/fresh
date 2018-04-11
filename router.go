@@ -5,9 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
-
-	"github.com/fatih/color"
 )
 
 // Handler struct
@@ -158,34 +155,6 @@ func (h *handler) Before(middleware ...HandlerFunc) Handler {
 		h.before = append(h.before, middleware...)
 	}
 	return h
-}
-
-// Print the list of routes
-func (r *router) printRoutes() {
-	println()
-	var tree func(routes []*route, parentPath string) error
-	tree = func(routes []*route, parentPath string) error {
-		for _, route := range routes {
-			separator := ""
-			if strings.HasSuffix(parentPath, "/") == false {
-				separator = "/"
-			}
-			currentPath := parentPath + separator + route.path
-
-			for _, handler := range route.handlers {
-				print(time.Now().Format("2006-01-02 03:04:05:"))
-				print("[")
-				color.Set(color.FgHiGreen)
-				print(handler.method)
-				color.Unset()
-				print("] - ")
-				println(currentPath)
-			}
-			tree(route.children, currentPath)
-		}
-		return nil
-	}
-	tree([]*route{r.route}, "")
 }
 
 // Register static routes for assets

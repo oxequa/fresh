@@ -4,6 +4,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/fatih/color"
 )
 
 const (
@@ -45,4 +48,42 @@ func contain(s string, arr []string) bool {
 		}
 	}
 	return false
+}
+
+func PrintBanner() {
+	color.Set(color.FgHiGreen)
+	println(banner)
+	color.Unset()
+}
+
+// Print the list of routes
+func PrintRouter(r *router) {
+	println()
+	var tree func(routes []*route, parentPath string) error
+	tree = func(routes []*route, parentPath string) error {
+		for _, route := range routes {
+			separator := ""
+			if strings.HasSuffix(parentPath, "/") == false {
+				separator = "/"
+			}
+			currentPath := parentPath + separator + route.path
+
+			for _, handler := range route.handlers {
+				print(time.Now().Format("(2006-01-02 03:04:05)---"))
+				print("[")
+				color.Set(color.FgHiGreen)
+				print(handler.method)
+				color.Unset()
+				print("]")
+				for i := len(handler.method); i < 8; i++ {
+					print("-")
+				}
+				print(">")
+				println(currentPath)
+			}
+			tree(route.children, currentPath)
+		}
+		return nil
+	}
+	tree([]*route{r.route}, "")
 }

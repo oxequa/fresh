@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fatih/color"
 	"golang.org/x/net/websocket"
 )
 
@@ -94,12 +93,12 @@ func (f *fresh) Run() error {
 	}
 
 	go func() {
-		color.Set(color.FgHiGreen)
-		println(banner)
-		color.Unset()
-		log.Println("Server listen on", f.Host+":"+port)
+		PrintBanner()
+		println("Server listen on", f.Host+":"+port)
 		f.Server.Handler = f.router
-		f.router.printRoutes()
+		if f.Config.Debug || (f.Config.Router != nil && f.Config.Router.Print) {
+			PrintRouter(f.router)
+		}
 		// check for tsl before serve
 		if f.TSL != nil {
 			f.tsl()

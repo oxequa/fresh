@@ -36,7 +36,12 @@ type (
 		Limit    *Limit            `yaml:"limit,omitempty"`   // limit options
 		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
 		Static   map[string]string `yaml:"static,omitempty"`  // serve static files
-		Options  bool              `yaml:"options,omitempty"`
+		Options  bool              `yaml:"options,omitempty"` // accept all OPTIONS requests
+		Router   *Router           `yaml:"router,omitempty"`  // router related config
+	}
+
+	Router struct {
+		Print bool `yaml:"print,omitempty"`
 	}
 
 	Limit struct {
