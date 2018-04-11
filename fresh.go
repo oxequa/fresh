@@ -96,6 +96,12 @@ func (f *fresh) Run() error {
 		PrintBanner()
 		println("Server listen on", f.Host+":"+port)
 		f.Server.Handler = f.router
+		// default route
+		if f.router.route.children == nil {
+			f.GET("/", func(c Context) error {
+				return c.Response().Raw(http.StatusOK, welcome)
+			})
+		}
 		if f.Config.Debug || (f.Config.Router != nil && f.Config.Router.Print) {
 			PrintRouter(f.router)
 		}

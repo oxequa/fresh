@@ -216,6 +216,7 @@ func (r *router) findNode(parent *route, path []string, context *context) *route
 	return parent
 }
 
+// Scan the tree searching for correct route node position
 func (r *router) register(parent *route, path []string, context *context) *route {
 	if len(path) > 0 {
 		for _, route := range parent.children {

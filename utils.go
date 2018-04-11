@@ -67,7 +67,6 @@ func PrintRouter(r *router) {
 				separator = "/"
 			}
 			currentPath := parentPath + separator + route.path
-
 			for _, handler := range route.handlers {
 				print(time.Now().Format("(2006-01-02 03:04:05)---"))
 				print("[")

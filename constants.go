@@ -1,5 +1,6 @@
 package fresh
 
+// Fresh main constants
 const (
 	banner = `
   _____              _     
@@ -9,6 +10,7 @@ const (
  |_|  |_|  \___||___/_| |_|																				   
 --------------- (v.0.1) ---
 `
+	welcome = "Fresh is working..."
 )
 
 // MIME types
