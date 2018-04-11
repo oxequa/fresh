@@ -140,7 +140,7 @@ func (f *fresh) WS(path string, handler HandlerFunc) Handler {
 		}).ServeHTTP(c.Response().Get(), c.Request().Get())
 		return err
 	}
-	return f.router.register("GET", path, h)
+	return f.router.addRoute("GET", path, h)
 }
 
 // Register a resource (get, post, put, delete)
@@ -156,13 +156,13 @@ func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 	for _, method := range res.methods {
 		switch method {
 		case "GET":
-			res.rest = append(res.rest, f.router.register(method, path, h[0]))
+			res.rest = append(res.rest, f.router.addRoute(method, path, h[0]))
 		case "POST":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, h[1]))
+			res.rest = append(res.rest, f.router.addRoute(method, path+"/"+name, h[1]))
 		case "PUT", "PATCH":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, h[2]))
+			res.rest = append(res.rest, f.router.addRoute(method, path+"/"+name, h[2]))
 		case "DELETE":
-			res.rest = append(res.rest, f.router.register(method, path+"/"+name, h[3]))
+			res.rest = append(res.rest, f.router.addRoute(method, path+"/"+name, h[3]))
 		}
 	}
 	return &res
@@ -170,37 +170,37 @@ func (f *fresh) CRUD(path string, h ...HandlerFunc) Resource {
 
 // GET api registration
 func (f *fresh) GET(path string, handler HandlerFunc) Handler {
-	return f.router.register("GET", path, handler)
+	return f.router.addRoute("GET", path, handler)
 }
 
 // PUT api registration
 func (f *fresh) PUT(path string, handler HandlerFunc) Handler {
-	return f.router.register("PUT", path, handler)
+	return f.router.addRoute("PUT", path, handler)
 }
 
 // POST api registration
 func (f *fresh) POST(path string, handler HandlerFunc) Handler {
-	return f.router.register("POST", path, handler)
+	return f.router.addRoute("POST", path, handler)
 }
 
 // TRACE api registration
 func (f *fresh) TRACE(path string, handler HandlerFunc) Handler {
-	return f.router.register("TRACE", path, handler)
+	return f.router.addRoute("TRACE", path, handler)
 }
 
 // PATCH api registration
 func (f *fresh) PATCH(path string, handler HandlerFunc) Handler {
-	return f.router.register("PATCH", path, handler)
+	return f.router.addRoute("PATCH", path, handler)
 }
 
 // DELETE api registration
 func (f *fresh) DELETE(path string, handler HandlerFunc) Handler {
-	return f.router.register("DELETE", path, handler)
+	return f.router.addRoute("DELETE", path, handler)
 }
 
 // OPTIONS api registration
 func (f *fresh) OPTIONS(path string, handler HandlerFunc) Handler {
-	return f.router.register("OPTIONS", path, handler)
+	return f.router.addRoute("OPTIONS", path, handler)
 }
 
 // ASSETS serve a list of static files. Array of files or directories TODO write logic
