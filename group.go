@@ -7,6 +7,7 @@ import (
 type (
 	Group interface {
 		Rest
+		Group(string) Group
 		After(...HandlerFunc) Group
 		Before(...HandlerFunc) Group
 	}
@@ -16,6 +17,12 @@ type (
 		route  *route
 	}
 )
+
+
+// Group registration
+func (g *group) Group(path string) Group {
+	return g.parent.Group(filepath.Join(g.route.path, path)).After(g.route.after...).Before(g.route.before...)
+}
 
 // WS api registration
 func (g *group) WS(path string, handler HandlerFunc) Handler {
