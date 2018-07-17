@@ -5,8 +5,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
+	"io/ioutil"
 	"golang.org/x/net/websocket"
+	"strings"
 )
 
 // Request structure
@@ -16,9 +17,13 @@ type (
 
 		IsWS() bool
 		IsTSL() bool
+		Auth() string
+		AuthBearer() string
 		URL() *url.URL
 		Method() string
+		Header() http.Header
 		JSON(interface{}) error
+		JSONraw() map[string]interface{}
 		Form() url.Values
 		Get() *http.Request
 		WS() *websocket.Conn
@@ -52,6 +57,18 @@ func (req *request) IsTSL() bool {
 	return false
 }
 
+// Auth return request header authorization
+func (req *request) Auth() string {
+	return req.r.Header.Get("Authorization")
+}
+
+// Auth return request header authorization
+func (req *request) AuthBearer() string {
+	token := req.r.Header.Get("Authorization")
+	split := strings.Split(token, "Bearer")
+	return split[1]
+}
+
 // Set URL parameters
 func (req *request) URL() *url.URL {
 	return req.r.URL
@@ -67,7 +84,12 @@ func (req *request) Form() url.Values {
 	return req.r.Form
 }
 
-// Get the body mapped to an interface from a application/json request
+// Header return http request header
+func (req *request) Header() http.Header{
+	return req.r.Header
+}
+
+// JSON return a json body mapped to a given interface
 func (req *request) JSON(i interface{}) error {
 	err := json.NewDecoder(req.r.Body).Decode(i)
 	if err != nil {
@@ -75,6 +97,20 @@ func (req *request) JSON(i interface{}) error {
 	}
 	// TODO: handle errors
 	return nil
+}
+
+// JSONraw return a json body mapped to a raw interface
+func (req *request) JSONraw() map[string]interface{} {
+	var raw map[string]interface{}
+	body, err := ioutil.ReadAll(req.r.Body)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(body, &raw)
+	if err != nil {
+		panic(err)
+	}
+	return raw
 }
 
 // Request return current http request
