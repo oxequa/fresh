@@ -1,12 +1,14 @@
 package fresh
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
+	"math/rand"
+	"net"
+	"regexp"
 )
 
 const (
@@ -16,6 +18,17 @@ const (
 	G
 	T
 )
+
+// RandPort return an available server port number
+func randPort(address string, port int) int {
+	ln, err := net.Listen("tcp", address+":"+strconv.Itoa(port))
+	defer ln.Close()
+	if err != nil {
+		rand.Seed(time.Now().Unix())
+		return randPort(address, rand.Intn(9999-1111)+1111)
+	}
+	return port
+}
 
 // Size convert a string like 10K or 5MB in relative int64 number size
 func size(s string) (r int64) {
@@ -48,12 +61,6 @@ func contain(s string, arr []string) bool {
 		}
 	}
 	return false
-}
-
-func PrintBanner() {
-	color.Set(color.FgHiGreen)
-	println(banner)
-	color.Unset()
 }
 
 // Print the list of routes

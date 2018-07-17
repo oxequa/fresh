@@ -7,8 +7,26 @@ import (
 	"strings"
 )
 
-// Handler struct
 type (
+	// Single route struct
+	route struct {
+		path      string
+		handlers  []*handler
+		parent    *route
+		children  []*route
+		after     []HandlerFunc
+		before    []HandlerFunc
+		parameter bool
+	}
+
+	// Router struct
+	router struct {
+		*fresh
+		route  *route
+		static map[string]string
+	}
+
+	// Handler struct
 	Handler interface {
 		After(...HandlerFunc) Handler
 		Before(...HandlerFunc) Handler
@@ -19,35 +37,15 @@ type (
 		before []HandlerFunc
 		after  []HandlerFunc
 	}
-)
 
-// Route struct
-type route struct {
-	path      string
-	handlers  []*handler
-	parent    *route
-	children  []*route
-	after     []HandlerFunc
-	before    []HandlerFunc
-	parameter bool
-}
-
-// Router struct
-type router struct {
-	*fresh
-	route  *route
-	static map[string]string
-}
-
-// Resource struct
-type (
-	Resource interface {
-		After(...HandlerFunc) Resource
-		Before(...HandlerFunc) Resource
-	}
+	// Resource struct
 	resource struct {
 		methods []string
 		rest    []Handler
+	}
+	Resource interface {
+		After(...HandlerFunc) Resource
+		Before(...HandlerFunc) Resource
 	}
 )
 
@@ -85,6 +83,12 @@ func (r *route) addHandler(method string, controller HandlerFunc, middleware ...
 // Process a request
 func (r *router) process(handler *handler, response http.ResponseWriter, request *http.Request, context *context) (err error) {
 	context.init(request, response)
+	// TODO improve layout
+	// log route stdout
+	defer func() {
+		r.config.log(request.Method, request.RequestURI, context.response.reply.code)
+	}()
+
 	if err = handler.middleware(context, handler.before...); err != nil {
 		return err
 	}
@@ -97,8 +101,8 @@ func (r *router) process(handler *handler, response http.ResponseWriter, request
 	if err = handler.middleware(context, handler.after...); err != nil {
 		return err
 	}
-
-	for _, ch := range r.Config.handlers {
+	// loop handlers
+	for _, ch := range r.config.handlers {
 		err := ch(context)
 		if err != nil {
 			return err
@@ -175,7 +179,7 @@ func (r *router) serveStatic(response http.ResponseWriter, request *http.Request
 			http.ServeFile(response, request, path)
 			return
 		} else if f.IsDir() {
-			for _, testDefaultFile := range r.Config.Default {
+			for _, testDefaultFile := range r.config.Default {
 				filePath := filepath.Join(path, testDefaultFile)
 				if f, err := os.Stat(filePath); err == nil && !f.IsDir() {
 					http.ServeFile(response, request, filePath)
@@ -185,6 +189,10 @@ func (r *router) serveStatic(response http.ResponseWriter, request *http.Request
 
 		}
 	}
+	// TODO improve layout
+	// log route stdout
+	r.config.log(request.Method, request.RequestURI, 404)
+	// write response
 	http.NotFound(response, request)
 }
 
@@ -243,7 +251,7 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 	context.parameters = make(map[string]string)
 	splittedPath := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
 	if route := r.findNode(r.route, splittedPath, context); route != nil {
-		if r.Options && request.Method == "OPTIONS" {
+		if r.config.Options && request.Method == "OPTIONS" {
 			h := &handler{
 				ctrl: func(c Context) error {
 					return c.Response().Code(http.StatusOK)

@@ -18,7 +18,6 @@ type (
 	}
 )
 
-
 // Group registration
 func (g *group) Group(path string) Group {
 	return g.parent.Group(filepath.Join(g.route.path, path)).After(g.route.after...).Before(g.route.before...)

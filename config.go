@@ -39,13 +39,13 @@ type (
 		Limit    *Limit            `yaml:"limit,omitempty"`   // limit options
 		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
 		Statics  map[string]string `yaml:"static,omitempty"`  // serve static files
-		Banner   bool              `yaml:"banner,omitempty"` // enable / disable startup banner
+		Banner   bool              `yaml:"banner,omitempty"`  // enable / disable startup banner
 		Options  bool              `yaml:"options,omitempty"` // accept all OPTIONS requests
 		Router   *Router           `yaml:"router,omitempty"`  // router related config
 	}
 
 	Logs struct {
-		File bool `yaml:"file,omitempty"`
+		File   bool `yaml:"file,omitempty"`
 		Stdout bool `yaml:"stdout,omitempty"`
 	}
 

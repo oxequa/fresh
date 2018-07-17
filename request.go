@@ -2,11 +2,11 @@ package fresh
 
 import (
 	"encoding/json"
+	"golang.org/x/net/websocket"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"io/ioutil"
-	"golang.org/x/net/websocket"
 	"strings"
 )
 
@@ -85,7 +85,7 @@ func (req *request) Form() url.Values {
 }
 
 // Header return http request header
-func (req *request) Header() http.Header{
+func (req *request) Header() http.Header {
 	return req.r.Header
 }
 
