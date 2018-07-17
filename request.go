@@ -65,7 +65,7 @@ func (req *request) Auth() string {
 // Auth return request header authorization
 func (req *request) AuthBearer() string {
 	token := req.r.Header.Get("Authorization")
-	split := strings.Split(token, "Bearer")
+	split := strings.Split(token, "Bearer ")
 	return split[1]
 }
 
