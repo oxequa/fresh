@@ -4,19 +4,23 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/tls"
+	"fmt"
+	"github.com/fatih/color"
+	"golang.org/x/crypto/acme/autocert"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"golang.org/x/crypto/acme/autocert"
-	"gopkg.in/yaml.v2"
+	"time"
 )
 
 const (
+	logs = "fresh.logs"
 	file = "fresh.yaml"
 	perm = 0770
 )
@@ -28,16 +32,21 @@ type (
 		handlers []HandlerFunc     `yaml:"-"`                 // handlers array
 		Host     string            `yaml:"host,omitempty"`    // server host
 		Port     int               `yaml:"port,omitempty"`    // server port
-		Logs     bool              `yaml:"logs,omitempty"`    // server logs
-		Debug    bool              `yaml:"debug,omitempty"`   // debug status
+		Logs     Logs              `yaml:"logs,omitempty"`    // server logs
 		TSL      *TSL              `yaml:"tsl,omitempty"`     // tsl options
 		Gzip     *Gzip             `yaml:"gzip,omitempty"`    // gzip Config
 		CORS     *CORS             `yaml:"cors,omitempty"`    // cors options
 		Limit    *Limit            `yaml:"limit,omitempty"`   // limit options
 		Default  []string          `yaml:"default,omitempty"` // default static files (index.html or main.html and so on)
-		Static   map[string]string `yaml:"static,omitempty"`  // serve static files
+		Statics  map[string]string `yaml:"static,omitempty"`  // serve static files
+		Banner   bool              `yaml:"banner,omitempty"` // enable / disable startup banner
 		Options  bool              `yaml:"options,omitempty"` // accept all OPTIONS requests
 		Router   *Router           `yaml:"router,omitempty"`  // router related config
+	}
+
+	Logs struct {
+		File bool `yaml:"file,omitempty"`
+		Stdout bool `yaml:"stdout,omitempty"`
 	}
 
 	Router struct {
@@ -87,8 +96,22 @@ type (
 	Filter func(Context) bool
 )
 
-// Init server config
-func (c *Config) Init() *Config {
+// TSL with auto cert file
+func (c *Config) tsl() *Config {
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(c.Host),
+	}
+	c.server.TLSConfig = &tls.Config{
+		GetCertificate: certManager.GetCertificate,
+	}
+	return c
+}
+
+// Init set default server config
+func (c *Config) init(f *fresh) *Config {
+	c.Banner = true
+	c.Logs.Stdout = true
 	// add handlers
 	c.handlers = append(c.handlers,
 		// gzip
@@ -197,18 +220,6 @@ func (c *Config) Init() *Config {
 	return c
 }
 
-// TSL with auto cert file
-func (c *Config) tsl() *Config {
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(c.Host),
-	}
-	c.Server.TLSConfig = &tls.Config{
-		GetCertificate: certManager.GetCertificate,
-	}
-	return c
-}
-
 // Read server Config from a file
 func (c *Config) read(path string) error {
 	content, err := ioutil.ReadFile(filepath.Join(path, file))
@@ -230,6 +241,32 @@ func (c *Config) write(path string) error {
 		}
 	}
 	return ioutil.WriteFile(filepath.Join(path, file), content, perm)
+}
+
+// Banner print on startup if config banner is enabled
+func (c *Config) banner() {
+	if c.Banner {
+		fmt.Fprintln(color.Output, color.HiGreenString(banner))
+	}
+}
+
+// TODO improve logs layout
+// Log print if config logs is enabled
+func (c *Config) log(i ...interface{}) {
+	if c.Logs.Stdout {
+		log.Println(i...)
+	}
+	if c.Logs.File {
+		f, err := os.OpenFile(logs, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+		msg := append([]interface{}{time.Now().Format(time.RFC3339)}, i...)
+		if _, err = f.WriteString(fmt.Sprintln(msg...)); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // WriteHeader set a gzip header
