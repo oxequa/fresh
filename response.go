@@ -57,11 +57,7 @@ func (r *response) get() reply {
 
 // WriteErr response http error
 func (r *response) writeErr(err error) {
-	if r.reply.code == 0 {
-		http.Error(r.w, err.Error(), http.StatusInternalServerError)
-	} else {
-		http.Error(r.w, err.Error(), r.reply.code)
-	}
+	http.Error(r.w, err.Error(), r.reply.code)
 }
 
 // Check content type
