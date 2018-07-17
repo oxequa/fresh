@@ -57,6 +57,9 @@ func (r *response) get() reply {
 
 // WriteErr response http error
 func (r *response) writeErr(err error) {
+	if r.reply.code == 0 {
+		r.reply.code = http.StatusInternalServerError
+	}
 	http.Error(r.w, err.Error(), r.reply.code)
 }
 
