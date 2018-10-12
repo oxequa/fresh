@@ -66,7 +66,10 @@ func (req *request) Auth() string {
 func (req *request) AuthBearer() string {
 	token := req.r.Header.Get("Authorization")
 	split := strings.Split(token, "Bearer ")
-	return split[1]
+	if len(split) > 1 {
+		return split[1]
+	}
+	return ""
 }
 
 // Set URL parameters

@@ -257,7 +257,10 @@ func (r *router) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 					return c.Response().Code(http.StatusOK)
 				},
 			}
-			r.process(h, response, request, context)
+			err := r.process(h, response, request, context)
+			if err != nil {
+				context.Response().writeErr(err)
+			}
 			return
 		}
 		if routeHandler := route.getHandler(request.Method); routeHandler != nil {

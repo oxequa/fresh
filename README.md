@@ -29,3 +29,8 @@ Please read our guideline [here](CONTRIBUTING.md).
 ## License
 
 Fresh is licensed under the [GNU GENERAL PUBLIC LICENSE V3](LICENSE).
+
+## TODO
+
+* input validation
+* dto?

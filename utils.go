@@ -65,7 +65,6 @@ func contain(s string, arr []string) bool {
 
 // Print the list of routes
 func PrintRouter(r *router) {
-	println()
 	var tree func(routes []*route, parentPath string) error
 	tree = func(routes []*route, parentPath string) error {
 		for _, route := range routes {
